@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIFE STATS ▸ Pixel Age Calculator</title>
+<meta name="description" content="Enter your birthday and see your age in days, heartbeats, breaths, full moons, blinks, laps around the Sun and other whoa numbers — in glorious pixel art.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b0c16; --sky:#8ed3ff; --sky2:#cdeaff; --paper:#fff9ea; --cream:#fdf3d8;
+  --hot:#ff5964; --gold:#ffcc00; --grass:#4fc258; --grass-dk:#3a9c47; --wood:#8c5a34;
+  --blue:#3d7bff; --purp:#8f5bff; --teal:#00c2a8;
+  --hud-shadow:4px 4px 0 0 var(--ink);
+  --hud-shadow-sm:3px 3px 0 0 var(--ink);
+  --hud-shadow-lg:6px 6px 0 0 var(--ink);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  color:var(--ink); background:var(--sky);
+  overflow-x:hidden; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+img,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
+::selection{background:var(--gold);color:var(--ink)}
+
+/* ================= PIXELSCAPE CANVAS ================= */
+#skyCanvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block}
+
+/* ================= HUD LAYOUT ================= */
+.hud{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;
+  padding:clamp(12px,3vw,32px);min-height:100vh}
+.frame{width:min(920px,100%)}
+
+/* Title */
+.hero{text-align:center;margin-bottom:clamp(14px,2.5vw,24px)}
+.title{
+  font-family:'Press Start 2P',monospace;font-weight:400;
+  font-size:clamp(18px,4.2vw,36px);line-height:1.4;
+  color:#fff;
+  text-shadow:0 3px 0 var(--ink),3px 0 0 var(--ink),-3px 0 0 var(--ink),0 -3px 0 var(--ink),
+    3px 3px 0 var(--ink),-3px 3px 0 var(--ink),3px -3px 0 var(--ink),-3px -3px 0 var(--ink),
+    0 8px 0 var(--ink);
+  letter-spacing:1px;
+  animation:titlebob 2.4s steps(2,end) infinite;
+}
+@keyframes titlebob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.subtitle{display:inline-block;margin-top:14px;font-family:'Silkscreen',monospace;
+  font-size:clamp(11px,2vw,14px);background:var(--ink);color:var(--gold);
+  padding:6px 12px;border:3px solid #fff;box-shadow:var(--hud-shadow-sm)}
+
+/* Cards */
+.card{background:var(--paper);border:4px solid var(--ink);box-shadow:var(--hud-shadow-lg);
+  border-radius:0;padding:clamp(16px,3vw,28px)}
+.card+.card{margin-top:clamp(18px,3vw,26px)}
+
+/* Form */
+.field label{display:flex;align-items:center;gap:10px;font-family:'Press Start 2P',monospace;
+  font-size:clamp(10px,1.6vw,13px);margin-bottom:14px;line-height:1.6}
+.dot{width:12px;height:12px;background:var(--hot);border:2px solid var(--ink);flex:none;
+  animation:blinkdot 1.2s steps(2,start) infinite}
+@keyframes blinkdot{0%{opacity:1}50%{opacity:.15}}
+.row{display:flex;flex-wrap:wrap;gap:14px}
+.row .field{flex:1 1 220px;min-width:0}
+input[type="date"],input[type="time"]{
+  font-family:'Silkscreen',monospace;font-size:15px;color:var(--ink);
+  background:#fff;border:3px solid var(--ink);border-radius:0;width:100%;
+  padding:12px 10px;box-shadow:inset 4px 4px 0 0 rgba(11,12,22,.12);
+  transition:transform .12s steps(2,end)}
+input[type="date"]:focus,input[type="time"]:focus{outline:none;background:var(--cream);
+  transform:translate(-2px,-2px);box-shadow:inset 4px 4px 0 0 rgba(11,12,22,.12),4px 4px 0 0 var(--ink)}
+.hint{margin-top:12px;font-size:13px;font-weight:500;color:#4a4a55}
+
+/* Buttons */
+.btnwrap{display:flex;flex-wrap:wrap;gap:14px;margin-top:20px}
+button.btn{
+  font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.8vw,13px);line-height:1.6;
+  color:var(--ink);background:var(--gold);border:4px solid var(--ink);border-radius:0;
+  padding:14px 18px;box-shadow:var(--hud-shadow);position:relative;
+  transition:transform .1s steps(2,end),box-shadow .1s steps(2,end)}
+button.btn:hover{background:#ffd83d;transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 var(--ink)}
+button.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 0 var(--ink)}
+button.btn.primary{background:var(--hot);color:#fff}
+button.btn.primary:hover{background:#ff6f79}
+button.btn.ghost{background:var(--teal);color:var(--ink)}
+button.btn.ghost:hover{background:#12dcc1}
+button.btn.mic{background:var(--blue);color:#fff}
+button.btn.mic:hover{background:#5b93ff}
+
+/* Error toast */
+.err{display:none;margin-top:18px;background:var(--hot);color:#fff;border:4px solid var(--ink);
+  box-shadow:var(--hud-shadow);padding:12px 14px;font-weight:600;font-size:14px}
+.err.show{display:flex;gap:10px;animation:shake .4s steps(2,end)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Status strip */
+.status{display:none;margin-top:14px;font-family:'Silkscreen',monospace;font-size:12px;
+  background:var(--ink);color:#7dffb0;border:3px solid #fff;box-shadow:var(--hud-shadow-sm);
+  padding:8px 12px}
+.status.show{display:inline-block}
+.status b{color:var(--gold)}
+
+/* HERO GRID */
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(18px,3vw,26px);align-items:stretch}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr}}
+
+/* Big number */
+.bignum{text-align:center;padding:clamp(16px,3vw,26px) 12px;position:relative;overflow:hidden}
+.bignum .tag{display:inline-block;font-family:'Silkscreen',monospace;font-weight:700;
+  font-size:clamp(11px,1.8vw,14px);background:var(--ink);color:#fff;padding:4px 10px;border:2px solid #fff}
+.bignum .value{font-family:'Press Start 2P',monospace;font-size:clamp(30px,8vw,52px);
+  margin:18px 0 6px;color:var(--hot);text-shadow:4px 4px 0 var(--ink)}
+.bignum .unit{font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,15px)}
+.bignum .lived{margin-top:14px;font-family:'Silkscreen',monospace;font-size:12px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.badge{font-family:'Silkscreen',monospace;font-size:11px;border:3px solid var(--ink);
+  padding:4px 8px;box-shadow:var(--hud-shadow-sm);background:#fff}
+.badge.z{background:var(--purp);color:#fff}
+.badge.a{background:var(--teal);color:#fff}
+.badge.w{background:var(--gold)}
+
+/* Cake */
+.cakebox{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:8px}
+.cakebox h3{font-family:'Press Start 2P',monospace;font-size:clamp(11px,1.9vw,14px);line-height:1.7}
+.canvas-frame{background:#1b1f3d;border:4px solid var(--ink);box-shadow:inset 0 0 0 3px #fff,var(--hud-shadow);padding:10px}
+#cakeCanvas{display:block}
+.microw{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+.micbtn{font-family:'Press Start 2P',monospace;font-size:10px;background:#fff;color:var(--ink);
+  border:3px solid var(--ink);box-shadow:var(--hud-shadow-sm);padding:10px 12px;
+  transition:transform .1s steps(2,end),box-shadow .1s steps(2,end)}
+.micbtn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 0 var(--ink)}
+.micbtn:active{transform:translate(3px,3px);box-shadow:0 0 0 0 var(--ink)}
+.micbtn.listening{background:var(--gold);animation:pulsemic .8s steps(2,start) infinite}
+@keyframes pulsemic{0%{background:var(--gold)}50%{background:#fff}}
+.micmsg{font-family:'Silkscreen',monospace;font-size:11px;min-height:16px;max-width:300px;line-height:1.5}
+.micmsg.ok{color:var(--grass-dk)}
+.micmsg.warn{color:var(--hot)}
+
+/* Section head */
+.sechead{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.sechead h2{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.2vw,16px)}
+.sechead .bar{flex:1;height:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 10px,transparent 10px 16px)}
+
+/* Grids */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.stats-grid{grid-template-columns:1fr}}
+.stat{border:4px solid var(--ink);box-shadow:var(--hud-shadow);border-radius:0;
+  padding:16px;background:#fff;display:flex;flex-direction:column;gap:6px;min-width:0;
+  transition:transform .12s steps(2,end),box-shadow .12s steps(2,end)}
+.stat:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 0 var(--ink)}
+.stat .icon{width:44px;height:44px;flex:none}
+.stat .icon canvas{width:100%;height:100%;display:block}
+.stat .top{display:flex;align-items:center;gap:12px}
+.stat .name{font-family:'Silkscreen',monospace;font-weight:700;font-size:clamp(12px,1.6vw,14px);line-height:1.3}
+.stat .value{font-family:'Press Start 2P',monospace;font-size:clamp(16px,3vw,24px);margin-top:4px;word-break:break-word;line-height:1.4}
+.stat .sub{font-size:12px;color:#55555f;font-weight:500;line-height:1.4}
+.stat .note{font-size:12px;color:#77777f;line-height:1.4}
+.stat:nth-child(4n+1){background:var(--cream)}
+.stat:nth-child(4n+2){background:#eaf7ff}
+.stat:nth-child(4n+3){background:#f2ffe9}
+.stat:nth-child(4n+4){background:#fff1f1}
+
+/* Bars */
+.bars{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.bar-block{background:#fff;border:4px solid var(--ink);box-shadow:var(--hud-shadow);padding:14px}
+.bar-block .lbl{display:flex;justify-content:space-between;font-family:'Silkscreen',monospace;
+  font-weight:700;font-size:12px;margin-bottom:10px;gap:8px}
+.bar-block .lbl span:last-child{color:#55555f;font-weight:400;text-align:right}
+.pixelbar{height:24px;background:#dcdce6;border:3px solid var(--ink);position:relative;overflow:hidden}
+.pixelbar .fill{height:100%;width:0;position:relative;
+  background:repeating-linear-gradient(90deg,currentColor 0 8px,rgba(255,255,255,.55) 8px 12px)}
+.pixelbar .fill::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.4) 0 30%,transparent 30% 60%,rgba(0,0,0,.18) 60%)}
+#fillLife{color:var(--hot)} #fillEarth{color:var(--blue)} #fillMoon{color:var(--purp)}
+
+/* Milestones */
+.miles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:8px}
+.mile{border:4px solid var(--ink);box-shadow:var(--hud-shadow);padding:14px;display:flex;gap:12px;align-items:flex-start;background:#fff;min-width:0}
+.mile .icon{width:40px;height:40px;flex:none}
+.mile .icon canvas{width:100%;height:100%;display:block}
+.mile .mname{font-family:'Silkscreen',monospace;font-weight:700;font-size:13px}
+.mile .mdate{font-family:'Press Start 2P',monospace;font-size:12px;margin-top:6px;color:var(--blue);word-break:break-word;line-height:1.5}
+.mile .mnote{font-size:12px;color:#55555f;margin-top:6px;line-height:1.4}
+.mile.done{background:#eafbe7}
+.mile.done .mdate{color:var(--grass-dk)}
+.mile.next{background:#fff8dd}
+
+/* Footer */
+.footer{margin:26px 0 8px;text-align:center;font-family:'Silkscreen',monospace;font-size:11px;color:#123;
+  display:flex;flex-direction:column;gap:8px;align-items:center}
+.footer .fbtn{font-family:'Silkscreen',monospace;font-weight:700;font-size:11px;background:#fff;
+  border:3px solid var(--ink);box-shadow:var(--hud-shadow-sm);padding:6px 10px}
+.footer .fbtn:hover{background:var(--gold)}
+.fnote{font-size:10px;color:#345;max-width:560px;line-height:1.6}
+
+/* Reveal animation */
+.reveal{opacity:0;transform:translateY(24px)}
+.reveal.in{animation:reveal .38s steps(6,end) forwards}
+@keyframes reveal{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* Screenshot flash */
+.flash{position:fixed;inset:0;background:#fff;z-index:99;pointer-events:none;opacity:0}
+.flash.go{animation:flash .3s steps(4,end)}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}
+
+/* ================= SEASON SWITCHER ================= */
+.season-bar{
+  position:fixed;top:12px;right:12px;z-index:60;
+  display:flex;align-items:center;gap:6px;
+  background:var(--paper);
+  border:3px solid var(--ink);
+  box-shadow:4px 4px 0 0 var(--ink);
+  padding:6px 8px;
+  image-rendering:pixelated;
+}
+.season-label{font-family:'Silkscreen',monospace;font-size:9px;letter-spacing:1px;color:var(--ink);opacity:.6}
+.season-btn{
+  width:30px;height:30px;display:grid;place-items:center;
+  font-family:'Silkscreen',monospace;font-size:14px;line-height:1;
+  background:var(--cream);color:var(--ink);
+  border:2px solid var(--ink);
+  box-shadow:2px 2px 0 0 var(--ink);
+  cursor:pointer;
+  transition:transform .08s steps(2,end);
+}
+.season-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 0 var(--ink)}
+.season-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 0 var(--ink)}
+.season-btn.on{background:var(--gold);color:var(--ink)}
+.season-btn.auto.on{background:var(--teal);color:var(--ink)}
+.season-btn.cycle.on{background:var(--hot);color:#fff}
+.season-btn:focus-visible{outline:2px dashed var(--ink);outline-offset:2px}
+.season-btn canvas{height:15px;width:auto;image-rendering:pixelated;display:block}
+
+@media (max-width:640px){
+  .season-bar{top:auto;bottom:12px;right:8px;padding:5px 6px;gap:4px}
+  .season-label{display:none}
+  .season-btn{width:26px;height:26px;font-size:12px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .season-btn.cycle{display:none} /* no auto-rotating scenery when motion is reduced */
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<canvas id="skyCanvas" aria-hidden="true"></canvas>
+
+<div id="seasonBar" class="season-bar" role="toolbar" aria-label="Scenery season">
+  <span class="season-label">SEASON:</span>
+  <button class="season-btn auto" data-season="auto" title="Auto — follow the real-world season" aria-label="Auto: follow the real-world season"><canvas width="33" height="24" data-spr="sAuto"></canvas></button>
+  <button class="season-btn cycle" data-season="cycle" title="Auto-cycle all scenes every 30 seconds" aria-label="Auto-cycle all scenes every 30 seconds"><canvas width="33" height="24" data-spr="sCycle"></canvas></button>
+  <button class="season-btn" data-season="spring" title="Spring" aria-label="Spring scenery"><canvas width="39" height="18" data-spr="sSpring"></canvas></button>
+  <button class="season-btn" data-season="summer" title="Summer" aria-label="Summer scenery"><canvas width="36" height="21" data-spr="sSummer"></canvas></button>
+  <button class="season-btn" data-season="fall" title="Fall" aria-label="Fall scenery"><canvas width="36" height="24" data-spr="sFall"></canvas></button>
+  <button class="season-btn" data-season="winter" title="Winter" aria-label="Winter scenery"><canvas width="36" height="21" data-spr="sWinter"></canvas></button>
+  <button class="season-btn" data-season="sakura" title="Sakura blossom" aria-label="Sakura blossom scenery"><canvas width="30" height="18" data-spr="sSakura"></canvas></button>
+  <button class="season-btn" data-season="dusk" title="Sunset dusk" aria-label="Sunset dusk scenery"><canvas width="36" height="21" data-spr="sDusk"></canvas></button>
+  <button class="season-btn" data-season="night" title="Starry night" aria-label="Starry night scenery"><canvas width="33" height="21" data-spr="sNight"></canvas></button>
+</div>
+
+<div class="hud">
+<div class="frame">
+
+  <header class="hero">
+    <h1 class="title">LIFE STATS</h1>
+    <div class="subtitle">▼ ENTER YOUR BIRTHDAY ▼</div>
+  </header>
+
+  <section class="card" aria-labelledby="formTitle">
+    <h2 id="formTitle" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Birthday input</h2>
+    <div class="row">
+      <div class="field">
+        <label for="bday"><span class="dot"></span>BIRTHDAY (REQUIRED)</label>
+        <input type="date" id="bday" min="1900-01-01">
+      </div>
+      <div class="field">
+        <label for="btime"><span class="dot" style="background:var(--blue)"></span>TIME OF DAY (OPTIONAL)</label>
+        <input type="time" id="btime" value="12:00">
+      </div>
+    </div>
+    <p class="hint">Everything is computed in your browser — no data ever leaves this page.</p>
+    <div class="btnwrap">
+      <button class="btn primary" id="goBtn">▶ CALCULATE!</button>
+      <button class="btn ghost" id="resetBtn">↺ RESET</button>
+      <button class="btn" id="randBtn">🎲 SURPRISE ME</button>
+    </div>
+    <div class="err" id="errBox" role="alert"></div>
+  </section>
+
+  <section id="results" class="reveal" style="display:none" aria-live="polite">
+
+    <div class="hero-grid">
+      <div class="card bignum">
+        <span class="tag">▮ DAYS ALIVE ▮</span>
+        <div class="value" id="bigDays">0</div>
+        <div class="unit">DAYS ON EARTH</div>
+        <div class="lived" id="livedLine">—</div>
+        <div class="badges" id="badges"></div>
+      </div>
+      <div class="card cakebox">
+        <h3>🎂 THE CAKE<br>IS NOT A LIE</h3>
+        <div class="canvas-frame"><canvas id="cakeCanvas" width="140" height="150" aria-label="Pixel birthday cake"></canvas></div>
+        <div class="microw">
+          <button class="micbtn" id="micBtn">🎤 BLOW CANDLES</button>
+          <span class="micmsg" id="micMsg">Mic blows out the candles. Nothing is recorded.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sechead"><h2>★ THE WHOA NUMBERS</h2><div class="bar"></div></div>
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="bars">
+        <div class="bar-block">
+          <div class="lbl"><span>LIFE (EST. 80 YEARS)</span><span id="lifePct">0%</span></div>
+          <div class="pixelbar"><div class="fill" id="fillLife"></div></div>
+        </div>
+        <div class="bar-block">
+          <div class="lbl"><span>LAPS AROUND THE SUN</span><span id="earthPct">0%</span></div>
+          <div class="pixelbar"><div class="fill" id="fillEarth"></div></div>
+        </div>
+        <div class="bar-block">
+          <div class="lbl"><span>PROGRESS TO NEXT BIRTHDAY</span><span id="moonPct">0%</span></div>
+          <div class="pixelbar"><div class="fill" id="fillMoon"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sechead"><h2>★ PIXEL MILESTONES</h2><div class="bar"></div></div>
+      <div class="miles" id="miles"></div>
+      <div class="btnwrap">
+        <button class="btn" id="copyBtn">⧉ COPY REPORT</button>
+        <button class="btn" id="shotBtn">▣ SCREENSHOT MODE</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="fbtn" id="againBtn">↺ NEW BIRTHDAY</button>
+      <div class="fnote">Estimates use fun averages — not medical advice. All math happens locally on your device. ▲</div>
+    </div>
+  </section>
+
+</div>
+</div>
+<div class="flash" id="flash"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   LIFE STATS — single-file pixel age calculator
+   ============================================================ */
+(function () {
+
+/* ---------------- helpers ---------------- */
+var $ = function (id) { return document.getElementById(id); };
+var INT = new Intl.NumberFormat("en-US");
+var DAY = 86400000;
+
+function fmt(n) { return INT.format(Math.round(n)); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function fmtDate(d) {
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+function fmtDateY(d) {
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+/* ================= PIXEL SPRITES (pure canvas, no images) ================= */
+function makeSprite(map, palette, scale) {
+  var rows = map.split("/");
+  var h = rows.length, w = rows[0].length;
+  var c = document.createElement("canvas");
+  c.width = w * scale; c.height = h * scale;
+  var ctx = c.getContext("2d");
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < rows[y].length; x++) {
+      var ch = rows[y][x];
+      var col = palette[ch];
+      if (col) {
+        ctx.fillStyle = col;
+        ctx.fillRect(x * scale, y * scale, scale, scale);
+      }
+    }
+  }
+  return c;
+}
+
+var PAL = {
+  ".": null, k: "#0b0c16", w: "#ffffff",
+  r: "#ff5964", R: "#c22f3a", p: "#ffb3c1", o: "#ff9d2e", y: "#ffcc00", Y: "#ffe27a",
+  g: "#4fc258", G: "#2e7d3a", b: "#3d7bff", B: "#2450b3", c: "#8ed3ff", C: "#4aa3d8",
+  P: "#8f5bff", v: "#c9a6ff", n: "#8c5a34", N: "#5e3a1e", s: "#e8e8f2", S: "#b9b9cc",
+  m: "#ff8fb3", M: "#e05a86", t: "#00c2a8", d: "#5e5e70", f: "#ffe9b8", F: "#ffd27a"
+};
+
+var SPRITES = {
+  heart: makeSprite(
+    ".kk..kk./krrkkrrk/krrrrrrk/krrrrrrk/.krrrrk/..krrk/...kk..",
+    PAL, 3),
+  bolt: makeSprite(
+    "...kkk/kkkyyk/.kyyyyk/.kyykk/..kkk/..kk./.kk./.k..",
+    PAL, 3),
+  moon: makeSprite(
+    "..kkkk/kkyyyk/kyyyyk/kyyyyk/kyyyyyk/kkyyyyk/..kkkkk",
+    PAL, 3),
+  eye: makeSprite(
+    ".kkkkkk/kwwwwsk/kwbbwwsk/kwbbwwsk/kwwwwsk/.kkkkkk",
+    PAL, 3),
+  earth: makeSprite(
+    "..kkkk/kbcgcbk/kbbbbbbk/kbgbbcbk/kbbbbgbk/kbcbbbk/.kkkkk",
+    PAL, 3),
+  zzz: makeSprite(
+    ".kkk/k/kk/k/.kkk",
+    PAL, 3),
+  music: makeSprite(
+    "....kkk/....kkk/....kk.k/....k..k/....k..k/.kkkk..k/.kkkk.k/..kk.k",
+    PAL, 3),
+  step: makeSprite(
+    "..kk../.kwwk./kwwwwk/kwwwwk/.kwwk./..kk..",
+    PAL, 3),
+  laugh: makeSprite(
+    "kkkkkk/kryyyrk/kwkkwkk/kyyyyyk/kyryryk/.kyyyyk/..kkkk",
+    PAL, 3),
+  planet: makeSprite(
+    "..kkkk/kPvvvPk/kvvvvvk/kPvvvPk/.kkPkk/kssssk/.kkkk.",
+    PAL, 3),
+  clock: makeSprite(
+    ".kkkkkk/kwwwwwk/kwkwbwk/kwkbwwk/kwwbwwk/kwwwwwk/.kkkkkk",
+    PAL, 3),
+  mile: makeSprite(
+    "kkkkkk/kryryrk/krryrrk/kryryrk/krrrrrk/kkkkkk/..kk..",
+    PAL, 3),
+  next: makeSprite(
+    ".kkkkk/kyyyyyk/kywwwyk/kywwwyk/kyyyyyk/.kkkkk",
+    PAL, 3),
+  done: makeSprite(
+    "...kk/k....k/k.g..k/kggg.k/k.gggk/k..g.k/.kkkkk",
+    PAL, 3),
+  /* ---- season / scene icon sprites ---- */
+  sSpring: makeSprite(
+    ".m..m..m..m../p.p.p.p.p.p.p/p.p.p.p.p.p.p/.p.p.p.p.p.p./..m.m..m.m.m./G..g..G..g..G",
+    PAL, 3),
+  sSummer: makeSprite(
+    "o...o..o...o/.oyyyyyyyyo./.oyyYYYYyyo./.oyYwwYYyyo./.oyyYYYYyyo./.oyyyyyyyyo./o...o..o...o",
+    PAL, 3),
+  sFall: makeSprite(
+    "..o..o..o..o/.ooooooooooo/oooooooooooo/.oooooooooo./..oooooooo../....oooo..../.....NN...../.....N......",
+    PAL, 3),
+  sWinter: makeSprite(
+    ".....s....../..s..s..s.../...s.s.s..../ssssssssssss/...s.s.s..../..s..s..s.../.....s......",
+    PAL, 3),
+  sSakura: makeSprite(
+    "....mm..../..mmppmm../.mppwwppm./.mppwwppm./..mmppmm../....mm....",
+    PAL, 3),
+  sDusk: makeSprite(
+    "...oooooo.../..oooooooo../.oyyYYYYyyo./.oyyYYYYyyo./..oooooooo../oooooooooooo/PPPPPPPPPPPP",
+    PAL, 3),
+  sNight: makeSprite(
+    "...ssss..../.ssss....../ssss....y../ssss...yyy./ssss....y../.ssss....../...ssss....",
+    PAL, 3),
+  sAuto: makeSprite(
+    ".kk.....kk./kkkkkkkkkkk/krrrrrrrrrk/kwwwwwwwwwk/kwkwwkwwkwk/kwwwwwwwwwk/kwwwrwwwwwk/kkkkkkkkkkk",
+    PAL, 3),
+  sCycle: makeSprite(
+    ".tttttttt../.t......t../.t.....ttt./.t......t../.t......t../t.t.....t../.t......t../.tttttttt..",
+    PAL, 3)
+};
+
+function iconHTML(key, alt) {
+  return '<div class="icon" role="img" aria-label="' + esc(alt || key) + '">' +
+    '<canvas width="' + SPRITES[key].width + '" height="' + SPRITES[key].height + '" data-spr="' + key + '"></canvas></div>';
+}
+function blitIcons(root) {
+  var list = (root || document).querySelectorAll("canvas[data-spr]");
+  for (var i = 0; i < list.length; i++) {
+    var src = SPRITES[list[i].getAttribute("data-spr")];
+    list[i].getContext("2d").drawImage(src, 0, 0);
+  }
+}
+
+/* ================= BACKGROUND PIXELSCAPE v2 — SEASONS ================= */
+var sky = $("skyCanvas"), sctx = sky.getContext("2d");
+var SKY_SCALE = 4, skyW = 0, skyH = 0;
+var clouds = [], birds = [], bgStars = [], flakes = [], petals = [], leaves = [], flies = [], animals = [], boats = [], butterflies = [], lowBirds = [], meteors = [];
+var sunX = 0, sunT = 0;
+var curX = -9999, curY = -9999; /* cursor position in sky-canvas coords */
+var meteorAt = -99999, meteorNext = 2500; /* shooting-star timing */
+var reduceMotion = false;
+try { reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+/* ---- season definitions ---- */
+var SEASONS = {
+  spring: {
+    label: "SPRING",
+    icon: "sSpring",
+    sky: ["#35a7e0", "#7fd0f2", "#c9f0d4", "#e8fbe4"],
+    stops: [0, 0.4, 0.72, 1],
+    hillFar: "#2f8f4e", hillMid: "#3ba75c", hillNear: "#48c06b",
+    grass: "#4fc258", grassDark: "#3a9c47",
+    water: "#2a6fa8", waterGlint: "#4aa3d8",
+    trunk: "#5e3a1e", trunkDark: "#4a2c15",
+    canopy: ["#2e8b3d", "#3fae4f", "#63cf6e"],
+    blossom: "#ffd7ec",
+    sun: "#ffcc00", sunCore: "#ffe27a",
+    night: false, clouds: "#ffffff", birds: true,
+    weather: "petals",
+    butterflies: true,
+    animals: ["bunny", "duck"], boat: 1
+  },
+  summer: {
+    label: "SUMMER",
+    icon: "sSummer",
+    sky: ["#1f6fd0", "#3f97e0", "#7fd0ef", "#d2f3ff"],
+    stops: [0, 0.38, 0.7, 1],
+    hillFar: "#2a8747", hillMid: "#339e52", hillNear: "#3fb75f",
+    grass: "#3fb75f", grassDark: "#2c8f4a",
+    water: "#1f6fa8", waterGlint: "#3fa0d8",
+    trunk: "#5e3a1e", trunkDark: "#4a2c15",
+    canopy: ["#1f7a33", "#2e9440", "#4ab555"],
+    blossom: "#ffe27a",
+    sun: "#ffb300", sunCore: "#ffdd55",
+    night: false, clouds: "#ffffff", birds: true,
+    weather: "none",
+    animals: ["duck", "fox"], boat: 2
+  },
+  fall: {
+    label: "FALL",
+    icon: "sFall",
+    sky: ["#c96a2b", "#e08c46", "#f2b56b", "#f9dca0"],
+    stops: [0, 0.42, 0.72, 1],
+    hillFar: "#a35a2a", hillMid: "#b86a30", hillNear: "#c97b38",
+    grass: "#c98a3f", grassDark: "#a06a2e",
+    water: "#35586e", waterGlint: "#5e8ba3",
+    trunk: "#4a2c15", trunkDark: "#35200f",
+    canopy: ["#c94f1e", "#e07a26", "#f2a83c"],
+    blossom: "#e07a26",
+    sun: "#ff9426", sunCore: "#ffc55e",
+    night: false, clouds: "#fbe6c8", birds: true,
+    weather: "leaves",
+    animals: ["fox", "deer"], boat: 1
+  },
+  winter: {
+    label: "WINTER",
+    icon: "sWinter",
+    sky: ["#5a6f9e", "#8fa8cf", "#c3d5ec", "#e8f1fa"],
+    stops: [0, 0.4, 0.72, 1],
+    hillFar: "#8fa8cf", hillMid: "#b8cce6", hillNear: "#dce8f5",
+    grass: "#e8f1fa", grassDark: "#c3d5ec",
+    water: "#4a7ba6", waterGlint: "#9cc8e8",
+    trunk: "#4a3423", trunkDark: "#38261a",
+    canopy: ["#2d5e46", "#3a7a5a", "#4f9973"],
+    blossom: "#ffffff",
+    sun: "#fff2c8", sunCore: "#ffffff",
+    night: false, clouds: "#f2f7fc", birds: false,
+    weather: "snow",
+    animals: ["bunny"]
+  },
+  sakura: {
+    label: "SAKURA",
+    icon: "sSakura",
+    sky: ["#f2a7c3", "#f7c2d8", "#fbe0ea", "#fef4f0"],
+    stops: [0, 0.4, 0.72, 1],
+    hillFar: "#d886ac", hillMid: "#e8a0c0", hillNear: "#f2b8d0",
+    grass: "#7ecf8a", grassDark: "#5cb56d",
+    water: "#7ba8d0", waterGlint: "#a8cce8",
+    trunk: "#5e3a4e", trunkDark: "#4a2c3d",
+    canopy: ["#f278a8", "#f79abf", "#fcc0da"],
+    blossom: "#ffd7ec",
+    sun: "#ff9ec4", sunCore: "#ffd0e0",
+    night: false, clouds: "#ffffff", birds: true,
+    weather: "petals2",
+    butterflies: true,
+    animals: ["deer", "duck"], boat: 1
+  },
+  dusk: {
+    label: "DUSK",
+    icon: "sDusk",
+    sky: ["#2a1a4a", "#7a2d5c", "#e05c4a", "#ffb36b"],
+    stops: [0, 0.35, 0.65, 1],
+    hillFar: "#7a4066", hillMid: "#542e50", hillNear: "#3a2050",
+    grass: "#3a2a52", grassDark: "#2c1f40",
+    water: "#3a2650", waterGlint: "#ffb36b",
+    trunk: "#2c1a28", trunkDark: "#1f1220",
+    canopy: ["#24402e", "#2e5038", "#3c6244"],
+    blossom: "#ffd08a",
+    sun: "#ff8830", sunCore: "#ffc46b",
+    sunYFrac: 0.55, sunR: 9, glow: true,
+    night: false, stars: true, clouds: "#e8a0b8", birds: true,
+    weather: "fireflies",
+    animals: ["deer"], boat: 1, silhouette: true
+  },
+  night: {
+    label: "NIGHT",
+    icon: "sNight",
+    sky: ["#0a1030", "#141d4a", "#1e2c60", "#2a3a78"],
+    stops: [0, 0.4, 0.72, 1],
+    hillFar: "#1a2450", hillMid: "#202c5c", hillNear: "#283868",
+    grass: "#22325e", grassDark: "#1a2450",
+    water: "#0f1c3c", waterGlint: "#3a5a8c",
+    trunk: "#2c1c12", trunkDark: "#1f140c",
+    canopy: ["#1c4430", "#265a3e", "#32704e"],
+    blossom: "#f2e8b8",
+    sun: "#f2f2d8", sunCore: "#ffffff",
+    night: true, clouds: "#2c3a6e", birds: false,
+    weather: "fireflies",
+    animals: ["fox", "deer"], boat: 1, silhouette: true
+  }
+};
+var SEASON_KEYS = ["spring", "summer", "fall", "winter", "sakura", "dusk", "night"];
+
+/* real-world season (meteorological). Flips for Southern Hemisphere timezones. */
+function realSeasonKey() {
+  var m = new Date().getMonth(); /* 0-11 */
+  var key = ["winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "fall", "fall", "fall", "winter"][m];
+  var south = false;
+  try {
+    var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+    var southTz = ["Australia/", "Pacific/Auckland", "Pacific/Fiji", "America/Argentina", "America/Santiago", "America/Sao_Paulo", "America/Montevideo", "America/Asuncion", "Africa/Johannesburg", "Africa/Windhoek", "Africa/Harare", "Africa/Maputo", "Antarctica/"];
+    for (var i = 0; i < southTz.length; i++) if (tz.indexOf(southTz[i]) === 0) { south = true; break; }
+  } catch (e) {}
+  if (south) key = { winter: "summer", spring: "fall", summer: "winter", fall: "spring" }[key];
+  return key;
+}
+
+var seasonAuto = true; /* follows the real-world season until the visitor picks a scene */
+var season = realSeasonKey();
+try {
+  var savedSeason = localStorage.getItem("ls_season");
+  if (savedSeason && SEASONS[savedSeason]) { season = savedSeason; seasonAuto = false; }
+} catch (e) {}
+
+/* ---- banded crossfade between scenes ----
+   Snapshots the old frame, then the new scene is revealed band by band
+   (top-down), with a shimmering 2px checker edge on the boundary. */
+var prevSky = document.createElement("canvas");
+var pctx = prevSky.getContext("2d");
+var fading = false, fadeStart = 0, skyDrawn = false;
+var FADE_MS = 900, FADE_BAND = 4;
+
+/* auto-cycle: rotates through every scene every 30 seconds */
+var SEASON_CYCLE_KEYS = SEASON_KEYS.slice();
+var CYCLE_MS = 30000;
+var cycleAuto = false, cycleTimer = null, cycleIdx = 0;
+function stopCycle() {
+  cycleAuto = false;
+  if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = null; }
+}
+function startCycle() {
+  stopCycle();
+  cycleAuto = true;
+  cycleIdx = Math.max(0, SEASON_CYCLE_KEYS.indexOf(season));
+  cycleTimer = setInterval(function () {
+    cycleIdx = (cycleIdx + 1) % SEASON_CYCLE_KEYS.length;
+    setSeason(SEASON_CYCLE_KEYS[cycleIdx], false);
+  }, CYCLE_MS);
+}
+
+function setSeason(key, persist) {
+  if (!SEASONS[key]) return;
+  /* start a banded crossfade from the current frame */
+  if (key !== season && skyDrawn && !reduceMotion) {
+    try {
+      prevSky.width = sky.width; prevSky.height = sky.height;
+      pctx.drawImage(sky, 0, 0);
+      fading = true;
+      fadeStart = performance.now();
+    } catch (e) { fading = false; }
+  }
+  season = key;
+  flakes = []; petals = []; leaves = []; flies = [];
+  butterflies = []; lowBirds = []; meteors = [];
+  spawnCritters();
+  if (persist) { try { localStorage.setItem("ls_season", key); } catch (e) {} }
+  var btns = document.querySelectorAll(".season-btn");
+  for (var i = 0; i < btns.length; i++) {
+    var ds = btns[i].getAttribute("data-season");
+    if (ds === key || (ds === "auto" && seasonAuto) || (ds === "cycle" && cycleAuto)) btns[i].classList.add("on");
+    else btns[i].classList.remove("on");
+  }
+}
+
+/* ---- deterministic pseudo-random per tree, so they don't jitter ---- */
+function srand(n) {
+  var x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/* ---- PROPER PIXEL TREE: 2-layer canopy blob + trunk with branches ----
+   k = trunk color, K = dark trunk, 1/2/3 = canopy shades, b = blossom dots, s = snow caps */
+function drawTree(x, y, kind, r, S) {
+  /* trunk (2px wide, height scales with size) */
+  var th = 4 + Math.round(r * 0.9);
+  sctx.fillStyle = S.trunk;     sctx.fillRect(x, y - th, 2, th);
+  sctx.fillStyle = S.trunkDark; sctx.fillRect(x + 1, y - th, 1, th);
+  if (kind === "pine") {
+    /* stacked triangle pine */
+    var w = 2;
+    for (var lvl = 0; lvl < 3; lvl++) {
+      var cy = y - th - lvl * 3;
+      var cw = w + lvl * 2;
+      sctx.fillStyle = S.canopy[lvl % S.canopy.length];
+      sctx.fillRect(x - cw, cy - 3, cw * 2 + 1, 3);
+      sctx.fillRect(x - cw + 1, cy - 4, cw * 2 - 1, 1);
+    }
+    /* tip */
+    sctx.fillStyle = S.canopy[2];
+    sctx.fillRect(x - 1, y - th - 10, 3, 2);
+    if (season === "winter") { /* snow caps on tiers */
+      sctx.fillStyle = "#ffffff";
+      sctx.fillRect(x - w - 1, y - th - 3, w * 2 + 3, 1);
+      sctx.fillRect(x - w - 3, y - th - 6, w * 2 + 5, 1);
+    }
+  } else {
+    /* round canopy: two overlapping blobs, 3 shades for depth */
+    var cw2 = 3 + Math.round(r);
+    var ch2 = 3 + Math.round(r * 0.7);
+    var cyy = y - th - ch2;
+    sctx.fillStyle = S.canopy[0];
+    sctx.fillRect(x - cw2, cyy, cw2 * 2 + 1, ch2 + 1);
+    sctx.fillRect(x - cw2 + 2, cyy - 2, cw2 * 2 - 3, 2);
+    sctx.fillRect(x - cw2 - 2, cyy + 1, cw2 + 2, ch2 - 2);
+    sctx.fillRect(x + 1, cyy + 1, cw2 + 1, ch2 - 2);
+    sctx.fillStyle = S.canopy[1]; /* lit top-left */
+    sctx.fillRect(x - cw2 + 1, cyy + 1, cw2, ch2 - 2);
+    sctx.fillRect(x - cw2 + 3, cyy - 1, cw2 - 4, 2);
+    sctx.fillStyle = S.canopy[2]; /* highlight pixel clumps */
+    sctx.fillRect(x - cw2 + 2, cyy + 1, 2, 1);
+    sctx.fillRect(x - cw2 + 4, cyy - 1, 2, 1);
+    sctx.fillRect(x - cw2 + 1, cyy + 3, 1, 2);
+    if (season === "sakura" || (season === "spring" && kind === "blossom")) {
+      sctx.fillStyle = S.blossom;
+      sctx.fillRect(x - cw2 + 2, cyy, 2, 1);
+      sctx.fillRect(x + 1, cyy + 2, 2, 1);
+      sctx.fillRect(x - cw2 + 4, cyy + 3, 1, 1);
+      sctx.fillRect(x - cw2 - 1, cyy + 2, 1, 1);
+    }
+    if (season === "winter") { /* snow blanket on canopy */
+      sctx.fillStyle = "#ffffff";
+      sctx.fillRect(x - cw2 + 1, cyy - 2, cw2 * 2 - 4, 1);
+      sctx.fillRect(x - cw2 - 1, cyy + 1, 2, 1);
+      sctx.fillRect(x + cw2 - 1, cyy + 1, 2, 1);
+      sctx.fillRect(x - cw2 + 3, cyy + 3, 3, 1);
+    }
+  }
+}
+
+/* ---- palm tree for summer beaches ---- */
+function drawPalm(x, y, r, S) {
+  var th = 5 + Math.round(r);
+  sctx.fillStyle = S.trunk;
+  for (var i = 0; i < th; i++) sctx.fillRect(x + (i % 2), y - 1 - i, 1, 1);
+  var ty = y - th;
+  sctx.fillStyle = S.canopy[1];
+  sctx.fillRect(x - 2, ty - 2, 5, 2);
+  sctx.fillRect(x - 4, ty - 1, 2, 1); sctx.fillRect(x + 3, ty - 1, 2, 1);
+  sctx.fillRect(x - 1, ty - 4, 3, 2);
+  sctx.fillRect(x - 3, ty - 3, 2, 1); sctx.fillRect(x + 2, ty - 3, 2, 1);
+  sctx.fillStyle = S.canopy[2];
+  sctx.fillRect(x, ty - 3, 1, 1);
+}
+
+function initSky() {
+  skyW = window.innerWidth; skyH = window.innerHeight;
+  sky.width = Math.ceil(skyW / SKY_SCALE);
+  sky.height = Math.ceil(skyH / SKY_SCALE);
+  fading = false; /* stale snapshot after a resize — just cut */
+  clouds = []; birds = []; bgStars = [];
+  for (var i = 0; i < 7; i++) {
+    clouds.push({
+      x: Math.random() * sky.width, y: sky.height * 0.08 + Math.random() * sky.height * 0.3,
+      s: 1 + (Math.random() < 0.35 ? 1 : 0), v: 0.06 + Math.random() * 0.08
+    });
+  }
+  for (var j = 0; j < 3; j++) {
+    birds.push({ x: Math.random() * sky.width, y: sky.height * 0.15 + Math.random() * sky.height * 0.25,
+      v: 0.12 + Math.random() * 0.08, f: Math.random() * 6 });
+  }
+  for (var s = 0; s < 60; s++) {
+    bgStars.push({ x: Math.floor(Math.random() * sky.width), y: Math.floor(Math.random() * sky.height * 0.55),
+      p: Math.random() * 6.28, col: Math.random() < 0.8 ? "#ffffff" : "#ffe27a" });
+  }
+  spawnCritters();
+}
+
+/* populate the scene's animals & boats for the current season */
+function spawnCritters() {
+  var S0 = SEASONS[season];
+  animals = []; boats = [];
+  var list = S0.animals || [];
+  for (var i = 0; i < list.length; i++) {
+    animals.push({ kind: list[i], x: Math.random() * sky.width,
+      v: (0.05 + Math.random() * 0.05) * (i % 2 ? 1 : -1),
+      panic: 0, alert: 0, sv: 1 });
+  }
+  for (var j = 0; j < (S0.boat || 0); j++) {
+    boats.push({ x: Math.random() * sky.width, v: 0.04 + Math.random() * 0.04 });
+  }
+  /* butterflies — spring & sakura only */
+  butterflies = [];
+  if (S0.butterflies) {
+    var bcols = season === "sakura" ? ["#e05a86", "#ff8fb3", "#ffffff"]
+                                    : ["#ff8fb3", "#ffe27a", "#ffffff", "#c9a6ff"];
+    for (var bf = 0; bf < 9; bf++) {
+      var bh = 3 + Math.random() * 9;
+      butterflies.push({ x: Math.random() * sky.width, h: bh, h0: bh,
+        v: (0.04 + Math.random() * 0.05) * (bf % 2 ? 1 : -1),
+        p: Math.random() * 6.28, c: bcols[bf % bcols.length],
+        panic: 0, fv: 1 });
+    }
+  }
+  /* low-flying birds skimming above the grass */
+  lowBirds = [];
+  if (S0.birds) {
+    for (var lb = 0; lb < 3 + Math.floor(Math.random() * 2); lb++) {
+      var lh = 3 + Math.random() * 5;
+      lowBirds.push({ x: Math.random() * sky.width, h: lh, h0: lh,
+        v: 0.25 + Math.random() * 0.2, f: Math.random() * 6, climb: 0 });
+    }
+  }
+}
+
+function drawCloud(x, y, s, col) {
+  sctx.fillStyle = col || "#ffffff";
+  sctx.fillRect(x, y, 3 * s, 2 * s);
+  sctx.fillRect(x + 2 * s, y - s, 4 * s, 2 * s);
+  sctx.fillRect(x + 4 * s, y, 3 * s, 2 * s);
+  sctx.fillRect(x, y + s, 7 * s, s);
+  /* flat pixel underside shading */
+  sctx.fillStyle = "rgba(11,12,22,0.12)";
+  sctx.fillRect(x, y + 2 * s, 7 * s, 1);
+}
+
+/* ---- animals: bunny, duck, deer, fox (silhouette mode at night/dusk) ---- */
+function drawAnimal(a, t, S, idx) {
+  var sil = S.silhouette;
+  function fill(c) { sctx.fillStyle = sil ? S.hillNear : c; }
+  var k = a.kind, x = Math.round(a.x);
+  if (k === "duck") {
+    var y = a.y + (Math.sin(t / (a.panic > 0 ? 240 : 400) + idx * 2) > 0 ? 0 : 1);
+    fill("#f2f2f2"); sctx.fillRect(x, y - 2, 3, 2);       /* body */
+    fill("#ffffff"); sctx.fillRect(x - 1, y - 2, 1, 1);   /* tail tip */
+    fill("#ffcc00"); sctx.fillRect(x + 3, y - 3, 2, 2);   /* head */
+    fill("#ff9d2e"); sctx.fillRect(x + 5, y - 3, 1, 1);   /* bill */
+    fill("#0b0c16"); sctx.fillRect(x + 4, y - 3, 1, 1);   /* eye */
+    fill("#f2f2f2"); sctx.fillRect(x + 1, y - 3, 2, 1);   /* wing */
+  } else if (k === "bunny") {
+    var y2 = a.y - (Math.sin(t / (a.panic > 0 ? 140 : 320) + idx) > 0.4 ? 1 : 0); /* hop */
+    fill("#e8e8f2"); sctx.fillRect(x, y2 - 2, 4, 2);      /* body */
+    fill("#ffffff"); sctx.fillRect(x + 3, y2 - 4, 2, 2);  /* head */
+    fill("#e8e8f2"); sctx.fillRect(x + 2, y2 - 6, 1, 2);  /* ear */
+    fill("#ffffff"); sctx.fillRect(x + 4, y2 - 6, 1, 2);  /* ear */
+    fill("#ff8fb3"); sctx.fillRect(x + 1, y2 - 3, 1, 1);  /* tail */
+  } else if (k === "deer") {
+    var y3 = a.y - (Math.floor(t / (a.panic > 0 ? 120 : 260) + idx) % 4 === 0 ? 1 : 0);
+    fill("#8c5a34"); sctx.fillRect(x, y3 - 4, 5, 3);      /* body */
+    fill("#8c5a34"); sctx.fillRect(x + 4, y3 - 7, 2, 3);  /* neck + head */
+    fill("#5e3a1e"); sctx.fillRect(x + 3, y3 - 9, 1, 2);  /* antlers */
+    fill("#5e3a1e"); sctx.fillRect(x + 5, y3 - 9, 1, 2);
+    fill("#5e3a1e"); sctx.fillRect(x + 1, y3 - 1, 1, 1);  /* legs */
+    fill("#5e3a1e"); sctx.fillRect(x + 3, y3 - 1, 1, 1);
+    fill("#ffe9b8"); sctx.fillRect(x, y3 - 2, 1, 1);      /* rump spot */
+  } else { /* fox */
+    var y4 = a.y - (Math.floor(t / (a.panic > 0 ? 100 : 220) + idx) % 5 === 0 ? 1 : 0);
+    fill("#ff7f3f"); sctx.fillRect(x, y4 - 2, 5, 2);      /* body */
+    fill("#ff7f3f"); sctx.fillRect(x - 2, y4 - 4, 2, 3);  /* head */
+    fill("#ff9d2e"); sctx.fillRect(x + 3, y4 - 5, 2, 2);  /* thick tail */
+    fill("#ffffff"); sctx.fillRect(x + 4, y4 - 4, 1, 1);  /* tail tip */
+    fill("#0b0c16"); sctx.fillRect(x - 1, y4 - 3, 1, 1);  /* nose */
+    fill("#5e3a1e"); sctx.fillRect(x + 1, y4, 1, 1);      /* legs */
+    fill("#5e3a1e"); sctx.fillRect(x + 3, y4, 1, 1);
+  }
+  /* startled "!" pops above the animal */
+  if (a.alert > 0) {
+    sctx.fillStyle = "#ffcc00";
+    var ey2 = a.y - (k === "deer" ? 12 : k === "duck" ? 6 : 8);
+    sctx.fillRect(x + 2, ey2, 1, 2);
+    sctx.fillRect(x + 2, ey2 + 3, 1, 1);
+  }
+}
+
+function drawBoat(b, t, wy) {
+  var x = Math.round(b.x);
+  var y = wy + 1 + (Math.sin(t / 500 + x) > 0 ? 0 : 1);
+  sctx.fillStyle = "#8c5a34"; sctx.fillRect(x, y - 2, 7, 1);      /* hull */
+  sctx.fillRect(x + 1, y - 1, 5, 1);
+  sctx.fillStyle = "#5e3a1e"; sctx.fillRect(x + 3, y - 6, 1, 4);  /* mast */
+  sctx.fillStyle = "#ffffff"; sctx.fillRect(x + 4, y - 6, 3, 3);  /* sail */
+  sctx.fillStyle = "#e8e8f2"; sctx.fillRect(x + 4, y - 5, 3, 1);
+}
+function drawBird(x, y, f) {
+  sctx.fillStyle = "#123";
+  if (Math.floor(f) % 2 === 0) {
+    sctx.fillRect(x, y, 1, 1); sctx.fillRect(x + 1, y + 1, 1, 1); sctx.fillRect(x + 2, y, 1, 1);
+  } else {
+    sctx.fillRect(x, y + 1, 1, 1); sctx.fillRect(x + 1, y, 1, 1); sctx.fillRect(x + 2, y + 1, 1, 1);
+  }
+}
+
+/* hill silhouette: deterministic, cached per season+width */
+var hillCache = {};
+function hillHeights(W, H, seed, amp) {
+  var key = seed + "_" + W + "_" + H;
+  if (hillCache[key]) return hillCache[key];
+  var arr = [];
+  for (var x = 0; x < W; x++) {
+    arr.push(Math.round(amp * (0.6 + 0.4 * Math.sin(x / 30 + seed)) +
+      amp * 0.5 * Math.sin(x / 13 + seed * 2) + amp * 0.25 * Math.sin(x / 6 + seed * 5)) + amp);
+  }
+  hillCache[key] = arr;
+  return arr;
+}
+
+function drawSky(ts) {
+  var t = ts || 0;
+  var W = sky.width, H = sky.height;
+  var S = SEASONS[season];
+
+  /* sky gradient (banded for retro feel) */
+  var grad = sctx.createLinearGradient(0, 0, 0, H);
+  for (var g = 0; g < S.sky.length; g++) grad.addColorStop(S.stops[g], S.sky[g]);
+  sctx.fillStyle = grad;
+  sctx.fillRect(0, 0, W, H);
+
+  /* stars — night & dusk */
+  if (S.night || S.stars) {
+    for (var i = 0; i < bgStars.length; i++) {
+      var st = bgStars[i];
+      if (Math.sin(t / 700 + st.p) > 0) { sctx.fillStyle = st.col; sctx.fillRect(st.x, st.y, 1, 1); }
+    }
+    /* shooting stars — a streak every few seconds */
+    if (!reduceMotion) {
+      if (t - meteorAt > meteorNext) {
+        meteorAt = t;
+        meteorNext = S.night ? 3500 + Math.random() * 4500 : 12000 + Math.random() * 8000;
+        var mdir = Math.random() < 0.5 ? 1 : -1;
+        meteors.push({
+          x: mdir === 1 ? Math.random() * W * 0.4 : W * 0.6 + Math.random() * W * 0.4,
+          y: H * 0.05 + Math.random() * H * 0.22,
+          vx: mdir * (1.1 + Math.random() * 0.9),
+          vy: 0.5 + Math.random() * 0.4,
+          life: 0, max: 26 + Math.floor(Math.random() * 14)
+        });
+      }
+      for (var mi = meteors.length - 1; mi >= 0; mi--) {
+        var mt = meteors[mi];
+        if (reduceMotion) { meteors.splice(mi, 1); continue; }
+        mt.x += mt.vx; mt.y += mt.vy; mt.life++;
+        if (mt.life >= mt.max || mt.x < -8 || mt.x > W + 8) { meteors.splice(mi, 1); continue; }
+        var mfade = 1 - mt.life / mt.max;
+        /* trail: dimming pixels behind the head */
+        for (var tr = 6; tr >= 1; tr--) {
+          if (tr > 4) sctx.fillStyle = "rgba(255,226,122," + (0.3 * mfade).toFixed(2) + ")";
+          else sctx.fillStyle = "rgba(255,255,255," + (0.7 * mfade).toFixed(2) + ")";
+          sctx.fillRect(Math.round(mt.x - mt.vx * tr), Math.round(mt.y - mt.vy * tr), 1, 1);
+        }
+        /* bright head + spawn flash */
+        sctx.fillStyle = "#ffffff";
+        sctx.fillRect(Math.round(mt.x), Math.round(mt.y), 2, 2);
+        if (mt.life < 3) {
+          sctx.fillStyle = "rgba(255,255,255,0.4)";
+          sctx.fillRect(Math.round(mt.x) - 2, Math.round(mt.y) - 2, 6, 6);
+        }
+      }
+    }
+  }
+
+  /* sun or moon — position/size can be tuned per season */
+  sunX = W * 0.8;
+  var sr = S.sunR || 6;
+  var sunY = H * (S.sunYFrac || 0.16) + Math.sin(t / 3000) * 2;
+  if (S.glow) { /* warm horizon glow bands behind the sun */
+    sctx.fillStyle = "rgba(255,150,80,0.18)";
+    sctx.fillRect(sunX - sr * 3, sunY - 2, sr * 6, 4);
+    sctx.fillStyle = "rgba(255,170,90,0.12)";
+    sctx.fillRect(sunX - sr * 4, sunY + 2, sr * 8, 3);
+  }
+  sctx.fillStyle = S.sun;
+  sctx.fillRect(sunX - sr, sunY - sr, sr * 2, sr * 2);
+  sctx.fillStyle = S.sunCore;
+  sctx.fillRect(sunX - sr + 2, sunY - sr + 2, sr * 2 - 4, sr * 2 - 4);
+  sctx.fillStyle = "#ffffff";
+  sctx.fillRect(sunX - 2, sunY - 4, 2, 2);
+  if (S.night) { /* carve moon crescent */
+    sctx.fillStyle = S.sky[0];
+    sctx.fillRect(sunX - 2, sunY - 7, 4, 4);
+    sctx.fillRect(sunX, sunY - 8, 3, 2);
+    sctx.fillRect(sunX + 2, sunY - 5, 3, 4);
+    sctx.fillRect(sunX + 1, sunY - 1, 3, 2);
+  }
+
+  /* clouds */
+  for (var c2 = 0; c2 < clouds.length; c2++) {
+    var cl = clouds[c2];
+    drawCloud(cl.x, cl.y, cl.s, S.clouds);
+    if (!reduceMotion) {
+      cl.x += cl.v;
+      if (cl.x > W + 10) { cl.x = -12; cl.y = H * 0.06 + Math.random() * H * 0.3; }
+    }
+  }
+
+  /* birds (not in winter/night) */
+  if (S.birds && !reduceMotion) {
+    for (var b = 0; b < birds.length; b++) {
+      var bd = birds[b];
+      drawBird(bd.x, bd.y + Math.sin(t / 500 + b) * 2, bd.f += 0.08);
+      bd.x += bd.v;
+      if (bd.x > W + 6) { bd.x = -8; bd.y = H * 0.12 + Math.random() * H * 0.3; }
+    }
+  }
+
+  /* ---------- parallax hills (3 layers) ---------- */
+  var hy = Math.floor(H * 0.72);
+  var layers = [
+    { col: S.hillFar, amp: 5, off: hy - 14, seed: 1, trees: false },
+    { col: S.hillMid, amp: 6, off: hy - 7, seed: 2, trees: false },
+    { col: S.hillNear, amp: 7, off: hy, seed: 3, trees: true }
+  ];
+  for (var L = 0; L < layers.length; L++) {
+    var ly = layers[L];
+    var hs = hillHeights(W, H, ly.seed, ly.amp);
+    sctx.fillStyle = ly.col;
+    for (var x2 = 0; x2 < W; x2++) sctx.fillRect(x2, ly.off - hs[x2], 1, hs[x2] + 2);
+    /* ridge highlight along the top of each hill */
+    sctx.fillStyle = "rgba(255,255,255,0.14)";
+    for (var x4 = 0; x4 < W; x4++) sctx.fillRect(x4, ly.off - hs[x4], 1, 1);
+  }
+
+  /* tiny hillside cabin with glowing window + chimney smoke */
+  var HH3 = hillHeights(W, H, 3, 7);
+  var hx = Math.floor(W * 0.18), hby = hy - HH3[hx];
+  sctx.fillStyle = S.trunkDark; sctx.fillRect(hx - 4, hby - 4, 9, 4); /* log walls */
+  sctx.fillStyle = "#c22f3a";  sctx.fillRect(hx - 5, hby - 6, 11, 2); /* roof */
+  sctx.fillStyle = "#8c1f28";  sctx.fillRect(hx - 5, hby - 7, 11, 1);
+  sctx.fillStyle = S.night ? "#ffd27a" : "#ffe9b8";
+  sctx.fillRect(hx - 2, hby - 3, 2, 2);                               /* window */
+  if (!S.night) { sctx.fillStyle = S.trunk; sctx.fillRect(hx + 4, hby - 9, 2, 3); } /* chimney */
+  var smokeT = Math.floor(t / 450);
+  sctx.fillStyle = "rgba(255,255,255,0.5)";
+  for (var sm = 0; sm < 3; sm++) {
+    sctx.fillRect(hx + 4 + ((sm + smokeT) % 2), hby - 10 - sm * 2 - (smokeT % 2), 1, 1);
+  }
+
+  /* ---------- tiny distant trees on the far hills ---------- */
+  for (var dx = 2; dx < W; dx += 11) {
+    var dy = hy - 12 + Math.floor(srand(dx) * 4);
+    sctx.fillStyle = S.canopy[0];
+    sctx.fillRect(dx, dy - 2, 3, 2);
+    sctx.fillStyle = S.trunk;
+    sctx.fillRect(dx + 1, dy, 1, 2);
+  }
+
+  /* ---------- main ground ---------- */
+  sctx.fillStyle = S.grass;
+  sctx.fillRect(0, hy, W, H - hy);
+  sctx.fillStyle = S.grassDark; /* top edge shading */
+  sctx.fillRect(0, hy, W, 1);
+  /* grass tufts */
+  for (var gx = 0; gx < W; gx += 5) {
+    var gy = hy + 3 + ((gx * 7) % Math.max(1, H - hy - 4));
+    sctx.fillStyle = S.grassDark;
+    sctx.fillRect(gx, gy, 1, 1);
+  }
+  /* little ferns between the tufts */
+  for (var fx2 = 2; fx2 < W; fx2 += 13) {
+    var fy2 = hy + 2 + ((fx2 * 5) % 3);
+    sctx.fillStyle = S.canopy[0];
+    sctx.fillRect(fx2, fy2, 1, 2);
+    sctx.fillRect(fx2 - 1, fy2 + 1, 1, 1);
+    sctx.fillRect(fx2 + 1, fy2 + 1, 1, 1);
+  }
+
+  /* ---------- PROPER TREES: layered rows, pine/round mix ---------- */
+  var treeSpacing = 26;
+  for (var tx = 4; tx < W; tx += treeSpacing) {
+    var r0 = srand(tx);
+    var kind0 = r0 < 0.45 ? "pine" : (r0 < 0.85 ? "round" : "blossom");
+    drawTree(tx, hy + 4 + Math.floor(srand(tx + 9) * 3), kind0, 2 + Math.floor(r0 * 2), S);
+  }
+  /* bigger foreground trees, sparser, on the near hill line */
+  for (var fx = 12; fx < W; fx += 47) {
+    var r1 = srand(fx + 3);
+    var kind1 = r1 < 0.4 ? "pine" : (r1 < 0.8 ? "round" : "blossom");
+    if (season === "summer" && r1 >= 0.8) { drawPalm(fx, hy + 8, 2 + Math.floor(r1 * 2), S); }
+    else drawTree(fx, hy + 8, kind1, 3 + Math.floor(r1 * 3), S);
+  }
+
+  /* ---------- water strip with season tint ---------- */
+  var wy = H - Math.max(6, Math.floor(H * 0.09));
+  sctx.fillStyle = S.water; sctx.fillRect(0, wy, W, H - wy);
+  sctx.fillStyle = S.waterGlint;
+  for (var wx = 0; wx < W; wx += 6) {
+    sctx.fillRect(wx, wy + 1 + ((wx / 6 + Math.floor(t / 400)) % 2), 3, 1);
+  }
+  /* lily pads in calm seasons, ice sheet in winter */
+  if (season === "winter") {
+    sctx.fillStyle = "#dce8f5";
+    sctx.fillRect(0, wy, W, 1);
+  } else if (!S.night) {
+    sctx.fillStyle = S.blossom;
+    for (var lx = 9; lx < W; lx += 23) sctx.fillRect(lx, wy + 2 + (lx % 3), 3, 1);
+  }
+
+  /* wooden dock reaching into the water */
+  var dockX = Math.floor(W * 0.62);
+  sctx.fillStyle = S.trunkDark;
+  sctx.fillRect(dockX, wy - 3, 8, 2);
+  sctx.fillRect(dockX + 1, wy - 1, 1, 2);
+  sctx.fillRect(dockX + 6, wy - 1, 1, 2);
+
+  /* cattails along the shore */
+  for (var rx = 4; rx < W; rx += 19) {
+    var ry2 = wy - 1;
+    sctx.fillStyle = S.grassDark;
+    sctx.fillRect(rx, ry2 - 3, 1, 4);
+    if ((rx / 19) % 2 === 0) { sctx.fillStyle = "#8c5a34"; sctx.fillRect(rx, ry2 - 4, 1, 1); }
+  }
+
+  /* drifting sailboats */
+  for (var bo = 0; bo < boats.length; bo++) {
+    drawBoat(boats[bo], t, wy);
+    if (!reduceMotion) {
+      boats[bo].x += boats[bo].v;
+      if (boats[bo].x > W + 8) boats[bo].x = -8;
+    }
+  }
+
+  /* roaming animals — they bolt when the cursor gets close */
+  for (var ai = 0; ai < animals.length; ai++) {
+    var an = animals[ai];
+    if (an.kind === "duck") an.y = wy + 1;
+    else an.y = hy + 6 + ((ai * 5) % Math.max(4, H - hy - 12));
+    if (!reduceMotion) {
+      var adx = an.x - curX, ady = an.y - curY;
+      if (curX > -999 && adx * adx + ady * ady < 484) { /* 22px scare radius */
+        if (an.panic <= 0) an.alert = 55;
+        an.panic = 1;
+        an.sv = adx >= 0 ? 1 : -1; /* flee directly away */
+      }
+      if (an.panic > 0) {
+        an.panic -= 0.008;
+        if (an.alert > 0) an.alert--;
+        an.x += an.sv * (0.25 + 0.3 * Math.max(0, an.panic));
+      } else {
+        an.x += an.v;
+      }
+      if (an.x > W + 6) an.x = -6;
+      if (an.x < -6) an.x = W + 6;
+    }
+    drawAnimal(an, t, S, ai);
+  }
+
+  /* low birds skimming the meadow — they startle upward */
+  for (var lbi = 0; lbi < lowBirds.length; lbi++) {
+    var lb2 = lowBirds[lbi];
+    var lby = hy - lb2.h - (Math.sin(t / 260 + lbi * 1.7) > 0 ? 1 : 0);
+    drawBird(lb2.x, lby, lb2.f += reduceMotion ? 0 : 0.22);
+    if (!reduceMotion) {
+      if (curX > -999) {
+        var ldx = lb2.x - curX, ldy = lby - curY;
+        if (ldx * ldx + ldy * ldy < 196) lb2.climb = 14; /* 14px radius */
+      }
+      if (lb2.climb > 0) { lb2.climb--; lb2.h = Math.min(24, lb2.h + 0.6); }
+      else if (lb2.h > lb2.h0) lb2.h = Math.max(lb2.h0, lb2.h - 0.15);
+      lb2.x += lb2.v;
+      if (lb2.x > W + 6) { lb2.x = -6; var lh2 = 3 + Math.random() * 5; lb2.h = lh2; lb2.h0 = lh2; }
+    }
+  }
+
+  /* butterflies fluttering over the grass (spring & sakura) */
+  for (var bi2 = 0; bi2 < butterflies.length; bi2++) {
+    var bf2 = butterflies[bi2];
+    var bfx = Math.round(bf2.x), bfy = hy - bf2.h - Math.round(Math.sin(t / 300 + bf2.p) * 1.5);
+    if (Math.floor(t / 140 + bf2.p) % 2) { /* wings open */
+      sctx.fillStyle = bf2.c;
+      sctx.fillRect(bfx - 1, bfy, 1, 1);
+      sctx.fillRect(bfx + 1, bfy, 1, 1);
+    } else {                               /* wings shut */
+      sctx.fillStyle = bf2.c;
+      sctx.fillRect(bfx - 1, bfy + 1, 3, 1);
+    }
+    sctx.fillStyle = S.trunkDark;
+    sctx.fillRect(bfx, bfy, 1, 1); /* body */
+    if (!reduceMotion) {
+      if (curX > -999) {
+        var bdx = bf2.x - curX, bdy = hy - bf2.h - curY;
+        if (bdx * bdx + bdy * bdy < 144) { bf2.panic = 1; bf2.fv = bdx >= 0 ? 1 : -1; } /* 12px radius */
+      }
+      if (bf2.panic > 0) {
+        bf2.panic -= 0.012;
+        bf2.x += bf2.fv * 0.5;
+        bf2.h = Math.min(18, bf2.h + 0.3); /* flit out of reach */
+      } else {
+        bf2.x += bf2.v + Math.sin(t / 900 + bf2.p) * 0.02;
+        if (bf2.h > bf2.h0) bf2.h = Math.max(bf2.h0, bf2.h - 0.05); /* settle back down */
+        if (Math.random() < 0.002) { var bh2 = 3 + Math.random() * 9; bf2.h = bh2; bf2.h0 = bh2; }
+      }
+      if (bf2.x > W + 4) bf2.x = -4;
+      if (bf2.x < -4) bf2.x = W + 4;
+    }
+  }
+
+  /* ---------- WEATHER PARTICLES ---------- */
+  if (!reduceMotion) {
+    var wmx = S.weather, spawn = Math.min(4, Math.ceil(W / 60));
+    for (var sp = 0; sp < spawn; sp++) {
+      if (wmx === "snow" && flakes.length < 70) {
+        flakes.push({ x: Math.random() * W, y: -2, v: 0.25 + Math.random() * 0.4, d: Math.random() * 6.28, sz: Math.random() < 0.3 ? 2 : 1 });
+      } else if ((wmx === "petals" || wmx === "petals2") && petals.length < 45) {
+        petals.push({ x: Math.random() * W, y: -2, v: 0.2 + Math.random() * 0.3, d: Math.random() * 6.28, c: Math.random() < 0.75 ? S.blossom : S.canopy[2] });
+      } else if (wmx === "leaves" && leaves.length < 35) {
+        leaves.push({ x: Math.random() * W, y: -2, v: 0.22 + Math.random() * 0.35, d: Math.random() * 6.28, c: S.canopy[Math.floor(Math.random() * 3)] });
+      } else if (wmx === "fireflies" && flies.length < 22) {
+        flies.push({ x: Math.random() * W, y: wy - 10 - Math.random() * 30, p: Math.random() * 6.28, vx: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.06 });
+      }
+    }
+    var k, p2;
+    /* snow */
+    sctx.fillStyle = "#ffffff";
+    for (k = 0; k < flakes.length; k++) {
+      p2 = flakes[k];
+      p2.y += p2.v; p2.x += Math.sin(p2.d += 0.03) * 0.3;
+      if (p2.y > H) { p2.y = -2; p2.x = Math.random() * W; }
+      sctx.fillRect(Math.round(p2.x), Math.round(p2.y), p2.sz, p2.sz);
+    }
+    /* petals / falling leaves — 2-frame flutter */
+    for (k = 0; k < petals.length; k++) {
+      p2 = petals[k];
+      p2.y += p2.v; p2.x += Math.sin(p2.d += 0.05) * 0.5;
+      if (p2.y > H) { p2.y = -2; p2.x = Math.random() * W; }
+      sctx.fillStyle = p2.c;
+      sctx.fillRect(Math.round(p2.x), Math.round(p2.y), 1, 1);
+      if (Math.floor(t / 300) % 2) sctx.fillRect(Math.round(p2.x) + 1, Math.round(p2.y), 1, 1);
+    }
+    for (k = 0; k < leaves.length; k++) {
+      p2 = leaves[k];
+      p2.y += p2.v; p2.x += Math.sin(p2.d += 0.04) * 0.45;
+      if (p2.y > H) { p2.y = -2; p2.x = Math.random() * W; }
+      sctx.fillStyle = p2.c;
+      sctx.fillRect(Math.round(p2.x), Math.round(p2.y), 2, 1);
+      if (Math.floor(t / 280) % 2) sctx.fillRect(Math.round(p2.x) - 1, Math.round(p2.y), 1, 1);
+    }
+    /* fireflies — blink above the water */
+    for (k = 0; k < flies.length; k++) {
+      p2 = flies[k];
+      p2.x += p2.vx; p2.y += p2.vy;
+      if (p2.x < 0) p2.x = W; if (p2.x > W) p2.x = 0;
+      if (p2.y < wy - 40) p2.vy = Math.abs(p2.vy); if (p2.y > wy - 2) p2.vy = -Math.abs(p2.vy);
+      if (Math.sin(t / 450 + p2.p) > 0.2) {
+        sctx.fillStyle = "#f2e8b8";
+        sctx.fillRect(Math.round(p2.x), Math.round(p2.y), 1, 1);
+        if (Math.sin(t / 450 + p2.p) > 0.75) {
+          sctx.fillStyle = "rgba(242,232,184,0.35)";
+          sctx.fillRect(Math.round(p2.x) - 1, Math.round(p2.y) - 1, 3, 3);
+        }
+      }
+    }
+  }
+
+  /* ---- banded scene crossfade overlay ---- */
+  if (fading) {
+    var fp2 = (t - fadeStart) / FADE_MS;
+    if (fp2 >= 1 || reduceMotion) {
+      fading = false;
+    } else {
+      var bands = Math.ceil(H / FADE_BAND);
+      var doneB = fp2 * (bands + 1);
+      var ph = Math.floor(t / 70) % 2; /* checker phase — makes the edge shimmer */
+      for (var bi = 0; bi < bands; bi++) {
+        var byy = bi * FADE_BAND;
+        if (byy >= H) break;
+        var bhh = Math.min(FADE_BAND, H - byy);
+        if (bi > doneB + 1) {
+          /* not reached yet — still the old scene */
+          sctx.drawImage(prevSky, 0, byy, W, bhh, 0, byy, W, bhh);
+        } else if (bi >= doneB - 1) {
+          /* dissolve edge — alternating columns of the old scene */
+          for (var sx2 = ((bi + ph) % 2) * 2; sx2 < W; sx2 += 4) {
+            sctx.drawImage(prevSky, sx2, byy, 2, bhh, sx2, byy, 2, bhh);
+          }
+        }
+        /* bi < doneB - 1: already revealed — leave the new scene showing */
+      }
+    }
+  }
+
+  /* pixel scanline vignette */
+  sctx.fillStyle = "rgba(11,12,22,0.05)";
+  for (var sy2 = 0; sy2 < H; sy2 += 3) { sctx.fillRect(0, sy2, W, 1); }
+  skyDrawn = true;
+}
+
+/* ---- season switcher wiring ---- */
+(function () {
+  var bar = document.getElementById("seasonBar");
+  if (!bar) return;
+  var btns = bar.querySelectorAll(".season-btn");
+  for (var i = 0; i < btns.length; i++) {
+    (function (btn, n) {
+      btn.addEventListener("click", function () {
+        var k = btn.getAttribute("data-season");
+        if (k === "cycle") {
+          if (cycleAuto) {
+            stopCycle(); /* toggle off — keep current scene */
+            setSeason(season, false); /* refresh button highlights */
+          } else {
+            seasonAuto = false;
+            try { localStorage.removeItem("ls_season"); } catch (e) {}
+            /* jump to the next scene immediately, then keep rotating */
+            cycleIdx = (SEASON_CYCLE_KEYS.indexOf(season) + 1) % SEASON_CYCLE_KEYS.length;
+            setSeason(SEASON_CYCLE_KEYS[cycleIdx], false);
+            startCycle();
+          }
+        } else if (k === "auto") {
+          stopCycle();
+          seasonAuto = true;
+          try { localStorage.removeItem("ls_season"); } catch (e) {}
+          setSeason(realSeasonKey(), false);
+        } else {
+          stopCycle();
+          seasonAuto = false;
+          setSeason(k, true);
+        }
+        blip(660 + (n % 8) * 60, 0.06);
+      });
+    })(btns[i], i);
+  }
+  setSeason(season, false);
+})();
+initSky();
+
+/* ================= CAKE SCENE ================= */
+var cake = $("cakeCanvas"), cctx = cake.getContext("2d");
+var candlesLit = true, blowAnim = 0, flameFlick = 0;
+var confetti = [];
+var CW = cake.width, CH = cake.height;
+
+function drawCake(ts) {
+  var t = ts || 0;
+  flameFlick = Math.floor(t / 120) % 2;
+  cctx.clearRect(0, 0, CW, CH);
+
+  /* night room */
+  cctx.fillStyle = "#1b1f3d"; cctx.fillRect(0, 0, CW, CH);
+  cctx.fillStyle = "#2b3059"; cctx.fillRect(0, CH - 18, CW, 18);
+  cctx.fillStyle = "#8ed3ff";
+  cctx.fillRect(10, 10, 2, 2); cctx.fillRect(120, 16, 2, 2); cctx.fillRect(60, 8, 2, 2);
+  cctx.fillRect(100, 30, 2, 2); cctx.fillRect(30, 34, 2, 2);
+
+  /* cake */
+  var cx = 42, cy = 52;
+  cctx.drawImage(SPRITES.cakeFull, cx, cy);
+
+  /* candles */
+  var spots = [8, 20, 32, 44];
+  for (var i = 0; i < spots.length; i++) {
+    var sx = cx + spots[i], sy = cy - 4;
+    cctx.fillStyle = ["#ff5964", "#3d7bff", "#4fc258", "#ffcc00"][i];
+    cctx.fillRect(sx, sy, 4, 12);
+    cctx.fillStyle = "#0b0c16"; cctx.fillRect(sx, sy, 4, 1);
+    if (candlesLit) {
+      cctx.fillStyle = flameFlick ? "#ffcc00" : "#ffe27a";
+      cctx.fillRect(sx, sy - 6, 4, 6);
+      cctx.fillStyle = flameFlick ? "#ff9d2e" : "#ffcc00";
+      cctx.fillRect(sx + 1, sy - 4, 2, 3);
+    } else if (blowAnim > 0) {
+      var p = Math.max(0, blowAnim);
+      cctx.fillStyle = "rgba(255,255,255," + (0.5 * p).toFixed(2) + ")";
+      cctx.fillRect(sx + 4, sy - 4, Math.round(6 * p), 2);
+    }
+  }
+
+  /* banner */
+  cctx.fillStyle = "#ff5964";
+  cctx.fillRect(8, 20, CW - 16, 8);
+  cctx.fillStyle = "#0b0c16";
+  cctx.fillRect(8, 20, CW - 16, 1); cctx.fillRect(8, 27, CW - 16, 1);
+  cctx.fillStyle = "#ffffff";
+  cctx.fillRect(12, 23, 2, 2); cctx.fillRect(16, 23, 2, 2);
+  cctx.fillStyle = "#ffe27a";
+  cctx.fillRect(60, 23, 10, 2);
+
+  /* confetti */
+  for (var cf = 0; cf < confetti.length; cf++) {
+    var f = confetti[cf];
+    f.y += f.v; f.x += Math.sin((t / 300) + f.p) * 0.4;
+    cctx.fillStyle = f.c;
+    cctx.fillRect(Math.round(f.x), Math.round(f.y), 2, 2);
+    if (f.y > CH) { f.y = -4; f.x = Math.random() * CW; }
+  }
+
+  if (blowAnim > 0) blowAnim -= 0.03;
+}
+
+/* build a larger cake sprite for the scene */
+SPRITES.cakeFull = makeSprite(
+  ".kYfYfYfYfYfk./kffffffffffffk/knnnnnnnnnnnnk/kmmmmmmmmmmmmk/kwwwwwwwwwwwwk/kppppppppppppk/kMMMMMMMMMMMMk/knnnnnnnnnnnnk",
+  PAL, 4);
+
+/* ================= AUDIO (blips) ================= */
+var AC = null;
+function blip(freq, dur, type) {
+  try {
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return;
+    if (!AC) AC = new Ctor();
+    if (AC.state === "suspended") AC.resume();
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "square";
+    o.frequency.value = freq;
+    g.gain.value = 0.05;
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + (dur || 0.08));
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + (dur || 0.08));
+  } catch (e) { /* audio is a luxury, not a requirement */ }
+}
+
+/* ================= TOASTS & REVEAL ================= */
+var errTimer = null;
+function showError(msg) {
+  var box = $("errBox");
+  box.innerHTML = "⚠ " + esc(msg);
+  box.classList.remove("show");
+  void box.offsetWidth;
+  box.classList.add("show");
+  clearTimeout(errTimer);
+  errTimer = setTimeout(function () { box.classList.remove("show"); }, 6000);
+  blip(140, 0.18);
+}
+function toast(msg, ok) {
+  var el = $("statusNote");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "statusNote";
+    el.className = "status";
+    el.setAttribute("role", "status");
+    $("errBox").parentNode.appendChild(el);
+  }
+  el.innerHTML = (ok ? "✔ " : "» ") + esc(msg);
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(function () { el.classList.remove("show"); }, 3200);
+}
+function reveal(el) {
+  el.classList.remove("in");
+  void el.offsetWidth;
+  el.classList.add("in");
+}
+
+/* ================= STATE ================= */
+var birth = null;      // ms timestamp
+var lastCounted = -1;  // int day count for ticking
+var rendered = false;  // first-render flag (replay card animations once per search)
+
+/* ================= CALCULATIONS ================= */
+var YEAR_MS = 365.2425 * DAY;
+
+function computeAge(ms) {
+  var b = new Date(birth);
+  var now = new Date(ms);
+  var years = now.getFullYear() - b.getFullYear();
+  var anniv = new Date(b.getFullYear() + years, b.getMonth(), b.getDate(),
+    b.getHours(), b.getMinutes(), b.getSeconds());
+  if (anniv > now) years--;
+  var last = new Date(b.getFullYear() + years, b.getMonth(), b.getDate(),
+    b.getHours(), b.getMinutes(), b.getSeconds());
+  var next = new Date(b.getFullYear() + years + 1, b.getMonth(), b.getDate(),
+    b.getHours(), b.getMinutes(), b.getSeconds());
+  var days = Math.floor((ms - birth) / DAY);
+  var daysExact = (ms - birth) / DAY;
+  var synodic = 29.530588 * DAY;
+  var fullMoons = Math.floor((ms - birth) / synodic);
+  var knownNew = Date.UTC(2000, 0, 6, 18, 14);   /* known new moon */
+  var moonAge = ((ms - knownNew) % synodic) / synodic;
+  var moonPhase = 1 - Math.abs(2 * moonAge - 1);
+  var nextFM = new Date(ms + (1 - moonAge) * synodic);
+  var weekends = saturdaysSince(b, daysExact);
+  var sleepDays = daysExact / 3;
+  var nextBday = next;
+  var toBday = next - ms;
+  var lifePct = clamp01(years / 80);
+  var progressToBday = 1 - toBday / (next - last);
+  return {
+    b: b, now: now, years: years, days: days, daysExact: daysExact,
+    anniversaries: years, months: Math.floor(daysExact / 30.436875),
+    weeks: Math.floor(daysExact / 7), hours: Math.floor(daysExact * 24),
+    minutes: Math.floor(daysExact * 1440), seconds: Math.floor(daysExact * 86400),
+    heartbeats: daysExact * 24 * 60 * 72,
+    breaths: daysExact * 24 * 60 * 16,
+    blinks: daysExact * 19200, /* ≈ 20 blinks per waking minute */
+    fullMoons: fullMoons, moonPhaseName: phaseName(moonPhase),
+    nextFullMoon: nextFM,
+    weekends: weekends, sleepDays: sleepDays,
+    sleepYears: sleepDays / 365.2425,
+    laughs: daysExact * 15,
+    songs: daysExact * 1.6,
+    steps: daysExact * 5000,
+    dreams: daysExact * 4, /* ~4 dream cycles per night */
+    earthSpeed: daysExact * 107226,
+    earthLaps: daysExact / 365.2425,
+    venusYears: daysExact / 224.7,
+    mercuryYears: daysExact / 87.97,
+    marsYears: daysExact / 686.98,
+    jupiterYears: daysExact / 4332.589,
+    saturnYears: daysExact / 10759.22,
+    nextBday: nextBday, toBday: toBday, lastBday: last,
+    progressToBday: clamp01(progressToBday),
+    lifePct: lifePct,
+    orbitLaps: daysExact * 107226 / 40075
+  };
+}
+function saturdaysSince(b, daysExact) {
+  var gap = (6 - b.getDay() + 7) % 7; /* days until the first Saturday after birth */
+  if (daysExact < gap) return 0;
+  return Math.floor((daysExact - gap) / 7) + 1;
+}
+function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+function phaseName(p) {
+  if (p > 0.92) return "FULL MOON";
+  if (p > 0.6) return "Waxing Gibbous";
+  if (p > 0.4) return "Quarter";
+  if (p > 0.1) return "Crescent";
+  return "New Moon";
+}
+function zodiac(d) {
+  var m = d.getMonth() + 1, day = d.getDate();
+  function inRange(mm, dd) { return m === mm && day >= dd; }
+  if ((m === 3 && day >= 21) || (m === 4 && day <= 19)) return ["Aries ♈", "Mar 21 – Apr 19"];
+  if ((m === 4 && day >= 20) || (m === 5 && day <= 20)) return ["Taurus ♉", "Apr 20 – May 20"];
+  if ((m === 5 && day >= 21) || (m === 6 && day <= 20)) return ["Gemini ♊", "May 21 – Jun 20"];
+  if ((m === 6 && day >= 21) || (m === 7 && day <= 22)) return ["Cancer ♋", "Jun 21 – Jul 22"];
+  if ((m === 7 && day >= 23) || (m === 8 && day <= 22)) return ["Leo ♌", "Jul 23 – Aug 22"];
+  if ((m === 8 && day >= 23) || (m === 9 && day <= 22)) return ["Virgo ♍", "Aug 23 – Sep 22"];
+  if ((m === 9 && day >= 23) || (m === 10 && day <= 22)) return ["Libra ♎", "Sep 23 – Oct 22"];
+  if ((m === 10 && day >= 23) || (m === 11 && day <= 21)) return ["Scorpio ♏", "Oct 23 – Nov 21"];
+  if ((m === 11 && day >= 22) || (m === 12 && day <= 21)) return ["Sagittarius ♐", "Nov 22 – Dec 21"];
+  if ((m === 12 && day >= 22) || (m === 1 && day <= 19)) return ["Capricorn ♑", "Dec 22 – Jan 19"];
+  if ((m === 1 && day >= 20) || (m === 2 && day <= 18)) return ["Aquarius ♒", "Jan 20 – Feb 18"];
+  return ["Pisces ♓", "Feb 19 – Mar 20"];
+}
+function chineseZodiac(y) {
+  var animals = ["Rat 🐀", "Ox 🐂", "Tiger 🐅", "Rabbit 🐇", "Dragon 🐉", "Snake 🐍",
+    "Horse 🐎", "Goat 🐐", "Monkey 🐒", "Rooster 🐓", "Dog 🐕", "Pig 🐖"];
+  return animals[(y - 1900) % 12];
+}
+function dayOfWeek(d) {
+  return d.toLocaleDateString("en-US", { weekday: "long" });
+}
+function nextLeapDay(now) {
+  var y = now.getFullYear();
+  for (;;) {
+    if (isLeap(y)) {
+      var cand = new Date(y, 1, 29, 23, 59, 59);
+      if (cand > now) return cand;
+    }
+    y++;
+  }
+}
+function nextHalley(now) {
+  var yearsTo = 2061 - now.getFullYear();
+  if (yearsTo < 0) return { label: "2061 window passed — check again in 75 years!", d: null };
+  return { label: "ETA " + (2061 - now.getFullYear()) + " yrs · " + (2061 - now.getFullYear()) + " orbits of you", d: new Date(2061, 5, 1) };
+}
+
+/* stat card definitions */
+function statList(a) {
+  var zod = zodiac(a.b);
+  var birthdayWd = dayOfWeek(a.b);
+  return [
+    { key: "heart", name: "HEARTBEATS", val: fmt(a.heartbeats), sub: "~" + fmt(a.heartbeats / a.daysExact) + "/day · your heart never clocked out", note: "Estimate: 72 bpm average", dataStat: "heart" },
+    { key: "bolt", name: "BREATHS", val: fmt(a.breaths), sub: "~" + fmt(a.breaths / a.daysExact) + "/day of pure oxygen", note: "Estimate: 16 breaths/min" },
+    { key: "eye", name: "BLINKS", val: fmt(a.blinks), sub: "each one a 0.3s blackout you never noticed", note: "Estimate: ~20 per waking minute" },
+    { key: "moon", name: "FULL MOONS", val: fmt(a.fullMoons), sub: "you've orbited " + fmt(a.fullMoons) + " lunar shows. Next: " + fmtDate(a.nextFullMoon), note: "Synodic month 29.53 days" },
+    { key: "earth", name: "LAPS AROUND THE SUN", val: a.earthLaps.toFixed(2), sub: "~" + fmt(a.earthSpeed) + " km ridden through space — without a seatbelt", note: "Earth orbits at ~107,226 km/h" },
+    { key: "step", name: "STEPS", val: fmt(a.steps), sub: "≈" + fmt(a.steps * 0.000762) + " km walked (if you're average)", note: "Estimate: 5,000 steps/day" },
+    { key: "zzz", name: "TIME ASLEEP", val: a.sleepYears.toFixed(1) + " YEARS", sub: "~" + fmt(a.sleepDays) + " days dreaming · " + fmt(a.dreams) + " dreams", note: "Estimate: 8h/night, 4 dream cycles/night" },
+    { key: "clock", name: "TOTAL SECONDS", val: fmt(a.seconds), sub: fmt(a.minutes) + " minutes · " + fmt(a.hours) + " hours", note: "Every single one counted", dataStat: "seconds" },
+    { key: "laugh", name: "LAUGHS", val: fmt(a.laughs), sub: "science says the average adult laughs ~15×/day", note: "Keep this number growing" },
+    { key: "music", name: "SONGS PLAYED", val: fmt(a.songs), sub: "~" + fmt(a.songs / Math.max(a.years, 1)) + " per year of your life", note: "Estimate: 1.6 songs/day" },
+    { key: "planet", name: "OTHER-PLANET BIRTHDAYS", val: a.mercuryYears.toFixed(0) + " MERCURY", sub: a.venusYears.toFixed(0) + " Venus · " + a.marsYears.toFixed(1) + " Mars · " + a.jupiterYears.toFixed(1) + " Jupiter · " + a.saturnYears.toFixed(2) + " Saturn", note: "One local year each" },
+    { key: "mile", name: "WEEKENDS LIVED", val: fmt(a.weekends), sub: "born on a " + birthdayWd.toUpperCase() + " · roughly " + fmt(a.weekends * 2) + " weekend days", note: "Saturdays since birth" },
+    { key: "moon", name: "MOON PHASE TONIGHT", val: a.moonPhaseName.toUpperCase(), sub: "Illumination: " + Math.round(0 /* set below */ ) + "%", note: "live from the sky (math)", phase: true },
+    { key: "earth", name: "ORBITS OF EARTH", val: fmt(a.orbitLaps) + "×", sub: "at orbital speed you'd circle the equator every 22 minutes", note: "Equator = 40,075 km" },
+    { key: "next", name: "NEXT LEAP DAY", val: fmtDateY(nextLeapDay(a.now)), sub: "extra " + "24h of life, free of charge", note: "Feb 29 - the rarest date" },
+    { key: "mile", name: "HALLEY'S COMET", val: nextHalley(a.now).label.split(" · ")[0], sub: nextHalley(a.now).label, note: "Next perihelion: 2061" }
+  ];
+}
+
+/* ================= RENDER ================= */
+function renderAll() {
+  var a = computeAge(Date.now());
+
+  /* hero */
+  $("bigDays").textContent = fmt(a.days);
+  var daysSinceLast = Math.max(0, Math.floor((a.now - a.lastBday) / DAY));
+  $("livedLine").textContent = "You have been alive for " +
+    a.years + " years, " + daysSinceLast + " days... and counting. ▲";
+
+  /* badges */
+  var zod = zodiac(a.b);
+  $("badges").innerHTML =
+    '<span class="badge z">ZODIAC ' + esc(zod[0]) + "</span>" +
+    '<span class="badge a">CHINESE ' + esc(chineseZodiac(a.b.getFullYear())) + "</span>" +
+    '<span class="badge w">BORN ' + esc(dayOfWeek(a.b).toUpperCase()) + "</span>";
+
+  /* moon illumination percent */
+  var synodic = 29.530588 * DAY;
+  var knownNew = Date.UTC(2000, 0, 6, 18, 14);
+  var illum = Math.round((1 - Math.abs(2 * (((Date.now() - knownNew) % synodic) / synodic) - 1)) * 100);
+
+  /* stat cards */
+  var stats = statList(a);
+  var grid = $("statsGrid");
+  var html = "";
+  var statCls = rendered ? "stat" : "stat reveal";
+  for (var i = 0; i < stats.length; i++) {
+    var s = stats[i];
+    if (s.phase) { s.sub = "Illumination: " + illum + "% · Next full: " + fmtDate(a.nextFullMoon); }
+    html +=
+      '<div class="' + statCls + '" style="animation-delay:' + (i * 40) + 'ms">' +
+        '<div class="top">' + iconHTML(s.key, s.name) +
+        '<div class="name">' + esc(s.name) + "</div></div>" +
+        '<div class="value" data-stat="' + (s.dataStat || "") + '">' + esc(s.val) + "</div>" +
+        '<div class="sub">' + esc(s.sub) + "</div>" +
+        '<div class="note">' + esc(s.note) + "</div>" +
+      "</div>";
+  }
+  grid.innerHTML = html;
+  blitIcons(grid);
+
+  /* bars */
+  var lp = Math.round(a.lifePct * 100);
+  var ep = Math.round(((a.earthLaps % 1)) * 100);
+  var mp = Math.round(a.progressToBday * 100);
+  $("lifePct").textContent = lp + "%";
+  $("earthPct").textContent = ep + "%";
+  $("moonPct").textContent = mp + "%";
+  $("fillLife").style.width = lp + "%";
+  $("fillEarth").style.width = ep + "%";
+  $("fillMoon").style.width = mp + "%";
+
+  /* milestones */
+  var miles = buildMilestones(a);
+  var mhtml = "";
+  for (var j = 0; j < miles.length; j++) {
+    var m = miles[j];
+    mhtml +=
+      '<div class="mile ' + (rendered ? "" : "reveal ") + (m.done ? "done" : "next") + '" style="animation-delay:' + (j * 50) + 'ms">' +
+        '<div class="icon" role="img" aria-label="' + (m.done ? "done" : "upcoming") + '">' +
+          '<canvas width="' + SPRITES[m.done ? "done" : "next"].width + '" height="' + SPRITES[m.done ? "done" : "next"].height + '" data-spr="' + (m.done ? "done" : "next") + '"></canvas></div>' +
+        "<div><div class=\"mname\">" + esc(m.name) + "</div>" +
+        '<div class="mdate">' + esc(fmtDate(m.date)) + "</div>" +
+        '<div class="mnote">' + esc(m.note) + "</div></div>" +
+      "</div>";
+  }
+  $("miles").innerHTML = mhtml;
+  blitIcons($("miles"));
+  rendered = true;
+}
+
+function buildMilestones(a) {
+  var list = [];
+  function m(name, date, note) {
+    list.push({ name: name, date: date, note: note, done: date.getTime() <= a.now.getTime() });
+  }
+  function day(n) { return new Date(a.b.getTime() + n * DAY); }
+  var HB_DAY = 1440 * 72; /* heartbeats per day at 72 bpm */
+
+  m("🎉 1 DAY OLD", day(1), "The first full rotation");
+  m("🎂 FIRST BIRTHDAY", day(365), "One full lap around the Sun");
+  m("♥ 1,000,000 HEARTBEATS", day(1000000 / HB_DAY), "≈ day " + fmt(1000000 / HB_DAY));
+  m("🌑 FIRST FULL MOON", day(29.53), "Luna's first salute");
+  m("🚶 10,000,000 STEPS", day(2000), "At 5,000 steps/day — ≈ 5.5 years old");
+  m("🏆 10,000 DAYS", day(10000), "≈ 27.4 years old");
+  m("♥ 1 BILLION HEARTBEATS", day(1000000000 / HB_DAY), "≈ age " + (1000000000 / HB_DAY / 365.2425).toFixed(1) + " yrs");
+  m("🏆 20,000 DAYS", day(20000), "≈ 54.8 years old");
+  m("🌑 1,000TH FULL MOON", day(1000 * 29.530588), "≈ age 80.7 yrs");
+  m("🎈 100TH BIRTHDAY", day(36525), "A century of pixels");
+
+  list.sort(function (x, y) { return x.date - y.date; });
+  var lastDone = 0;
+  for (var i = 0; i < list.length; i++) { if (list[i].done) lastDone = i; }
+  var start = Math.max(0, lastDone - 1);
+  return list.slice(start, start + 6);
+}
+
+/* ================= INPUT VALIDATION ================= */
+function parseBirthday() {
+  var dv = $("bday").value;
+  var tv = $("btime").value || "12:00";
+  if (!dv) {
+    showError("Please enter your birthday first! The stars need a starting point.");
+    return null;
+  }
+  var parts = dv.split("-");
+  var tparts = tv.split(":");
+  var d = new Date(
+    parseInt(parts[0], 10),
+    parseInt(parts[1], 10) - 1,
+    parseInt(parts[2], 10),
+    parseInt(tparts[0], 10) || 0,
+    parseInt(tparts[1], 10) || 0
+  );
+  if (isNaN(d.getTime())) {
+    showError("That date could not be parsed. Try picking it from the calendar widget.");
+    return null;
+  }
+  if (d.getFullYear() < 1900) {
+    showError("Whoa, time traveler! Please pick a year from 1900 onward.");
+    return null;
+  }
+  if (d.getTime() > Date.now()) {
+    showError("You can't be born in the future... yet. Pick a past date!");
+    return null;
+  }
+  return d.getTime();
+}
+
+/* ================= EVENTS ================= */
+$("goBtn").addEventListener("click", function () {
+  var t = parseBirthday();
+  if (t == null) return;
+  birth = t;
+  lastCounted = -1;
+  var res = $("results");
+  res.style.display = "block";
+  renderAll();
+  reveal(res);
+  if (window.innerWidth < 760) {
+    setTimeout(function () {
+      try { res.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { res.scrollIntoView(); }
+    }, 60);
+  }
+  blip(880, 0.09); setTimeout(function () { blip(1320, 0.12); }, 90);
+});
+
+$("resetBtn").addEventListener("click", resetAll);
+$("againBtn").addEventListener("click", resetAll);
+function resetAll() {
+  $("bday").value = "";
+  $("btime").value = "12:00";
+  birth = null;
+  rendered = false;
+  candlesLit = true;
+  var res = $("results");
+  res.style.display = "none";
+  res.classList.remove("in");
+  $("errBox").classList.remove("show");
+  try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+  blip(520, 0.08);
+}
+
+$("randBtn").addEventListener("click", function () {
+  var now = new Date();
+  var min = new Date(1950, 0, 1).getTime();
+  var max = now.getTime() - 13 * 365.2425 * DAY; /* keep it >= 13 years old */
+  var t = min + Math.random() * (max - min);
+  var d = new Date(t);
+  $("bday").value = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  $("btime").value = pad(d.getHours()) + ":" + pad(d.getMinutes());
+  $("goBtn").click();
+});
+
+$("copyBtn").addEventListener("click", function () {
+  if (!birth) return;
+  var a = computeAge(Date.now());
+  var lines = [
+    "=== MY LIFE STATS ===",
+    "Days alive: " + fmt(a.days),
+    "Heartbeats: " + fmt(a.heartbeats),
+    "Breaths: " + fmt(a.breaths),
+    "Blinks: " + fmt(a.blinks),
+    "Full moons: " + fmt(a.fullMoons),
+    "Laps around the Sun: " + a.earthLaps.toFixed(2),
+    "Time asleep: " + a.sleepYears.toFixed(1) + " years",
+    "Steps: " + fmt(a.steps),
+    "Zodiac: " + zodiac(a.b)[0] + " | Chinese: " + chineseZodiac(a.b.getFullYear()),
+    "Next birthday: " + fmtDate(a.nextBday),
+    "=== PIXEL LIFE STATS ==="
+  ];
+  var text = lines.join("\n");
+  function done() { toast("Report copied to clipboard!", true); blip(1046, 0.1); }
+  function fail() { toast("Copy blocked — select the text manually.", false); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, fail);
+  } else {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    ok ? done() : fail();
+  }
+});
+
+$("shotBtn").addEventListener("click", function () {
+  var f = $("flash");
+  f.classList.remove("go");
+  void f.offsetWidth;
+  f.classList.add("go");
+  blip(660, 0.06); setTimeout(function () { blip(990, 0.08); }, 70);
+  toast("Screenshot mode! Grab that perfect pixel frame. ▣", true);
+});
+
+/* Enter key support */
+$("bday").addEventListener("keydown", function (e) { if (e.key === "Enter") $("goBtn").click(); });
+$("btime").addEventListener("keydown", function (e) { if (e.key === "Enter") $("goBtn").click(); });
+
+/* ================= MIC BLOW (graceful permissions) ================= */
+var micState = "idle"; /* idle | requesting | listening | denied | unsupported */
+var audioStream = null, analyser = null, micRAF = null;
+
+function setMicMsg(txt, cls) {
+  var el = $("micMsg");
+  el.textContent = txt;
+  el.className = "micmsg" + (cls ? " " + cls : "");
+}
+function stopMic() {
+  if (micRAF) cancelAnimationFrame(micRAF), micRAF = null;
+  if (audioStream) {
+    var tracks = audioStream.getTracks();
+    for (var i = 0; i < tracks.length; i++) tracks[i].stop();
+    audioStream = null; analyser = null;
+  }
+  var btn = $("micBtn");
+  btn.classList.remove("listening");
+  btn.textContent = "🎤 BLOW CANDLES";
+  micState = "idle";
+}
+
+function startMic() {
+  /* guard: no browser support */
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+    micState = "unsupported";
+    setMicMsg("Your browser doesn't support the microphone API. Try Chrome, Edge, Firefox or Safari — or tap \"BLOW\" twice!", "warn");
+    blip(200, 0.2);
+    return;
+  }
+  if (micState === "requesting") return;
+  micState = "requesting";
+  setMicMsg("Requesting microphone access…", "");
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    audioStream = stream;
+    try {
+      var ACtor = window.AudioContext || window.webkitAudioContext;
+      var ac = new ACtor();
+      var src = ac.createMediaStreamSource(stream);
+      var an = ac.createAnalyser();
+      an.fftSize = 512;
+      src.connect(an);
+      analyser = an;
+    } catch (e) {
+      stopMic();
+      setMicMsg("Audio processing is unavailable in this browser.", "warn");
+      return;
+    }
+    micState = "listening";
+    $("micBtn").classList.add("listening");
+    $("micBtn").textContent = "🎤 LISTENING…";
+    setMicMsg("Blow into your mic! Loud air = candle-flame killer.", "ok");
+    listenLoop();
+  }).catch(function (err) {
+    micState = "denied";
+    var msg;
+    if (err && (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")) {
+      msg = "Microphone was BLOCKED. To enable it: click the 🔒/🎤 icon in your browser's address bar → Allow Microphone → reload. Or just admire the candles!";
+    } else if (err && (err.name === "NotFoundError" || err.name === "DevicesNotFoundError")) {
+      msg = "No microphone found on this device. The candles will keep burning!";
+    } else {
+      msg = "Mic error: " + (err && err.name ? err.name : "unknown") + ". Candles stay lit — that's okay too!";
+    }
+    setMicMsg(msg, "warn");
+    blip(180, 0.25);
+  });
+}
+
+function listenLoop() {
+  if (micState !== "listening" || !analyser) return;
+  var data = new Uint8Array(analyser.frequencyBinCount);
+  var loudFrames = 0;
+  function step() {
+    if (micState !== "listening") return;
+    analyser.getByteFrequencyData(data);
+    var sum = 0;
+    for (var i = 0; i < data.length; i++) sum += data[i];
+    var avg = sum / data.length;
+    if (avg > 55) loudFrames++; else loudFrames = Math.max(0, loudFrames - 1);
+    if (loudFrames > 5 && candlesLit) {
+      blowOut();
+      loudFrames = 0;
+    }
+    micRAF = requestAnimationFrame(step);
+  }
+  micRAF = requestAnimationFrame(step);
+}
+
+function blowOut() {
+  candlesLit = false;
+  blowAnim = 1;
+  setMicMsg("🎉 HAPPY BIRTHDAY!!! Make a wish, traveler!", "ok");
+  $("micBtn").textContent = "🔥 RELIGHT";
+  stopMicAnalyserOnly();
+  fanfare();
+}
+function stopMicAnalyserOnly() {
+  if (micRAF) cancelAnimationFrame(micRAF), micRAF = null;
+  if (audioStream) {
+    var tracks = audioStream.getTracks();
+    for (var i = 0; i < tracks.length; i++) tracks[i].stop();
+    audioStream = null; analyser = null;
+  }
+  var b = $("micBtn");
+  b.classList.remove("listening");
+  micState = "idle";
+}
+function relight() {
+  candlesLit = true;
+  blowAnim = 0;
+  $("micBtn").textContent = "🎤 BLOW CANDLES";
+  setMicMsg("Candles re-lit! Blow again any time.", "ok");
+  blip(740, 0.08);
+}
+$("micBtn").addEventListener("click", function () {
+  if (candlesLit === false) { relight(); return; }
+  if (micState === "listening") { stopMic(); setMicMsg("Mic off. Tap to try again.", ""); return; }
+  startMic();
+});
+
+function fanfare() {
+  var notes = [523, 659, 784, 1046];
+  for (var i = 0; i < notes.length; i++) {
+    (function (n, d) {
+      setTimeout(function () { blip(n, 0.14); }, d);
+    })(notes[i], i * 130);
+  }
+  /* confetti burst */
+  for (var c = 0; c < 40; c++) {
+    confetti.push({
+      x: Math.random() * CW, y: -4 - Math.random() * 30,
+      v: 0.3 + Math.random() * 0.8, p: Math.random() * 6.28,
+      c: ["#ff5964", "#ffcc00", "#4fc258", "#3d7bff", "#8f5bff", "#ffffff"][Math.floor(Math.random() * 6)]
+    });
+  }
+}
+
+/* ================= LIVE TICKING ================= */
+setInterval(function () {
+  if (birth == null) return;
+  var a = computeAge(Date.now());
+  var hv = document.querySelector('[data-stat="heart"]');
+  if (hv) hv.textContent = fmt(a.heartbeats);
+  var sv = document.querySelector('[data-stat="seconds"]');
+  if (sv) sv.textContent = fmt(a.seconds);
+  if (a.days !== lastCounted) {
+    lastCounted = a.days;
+    $("bigDays").textContent = fmt(a.days);
+    renderAll();
+  }
+}, 1000);
+
+/* also refresh stats every minute even if day hasn't changed */
+setInterval(function () {
+  if (birth == null) return;
+  renderAll();
+}, 60000);
+
+/* ================= MAIN LOOP ================= */
+function loop(ts) {
+  drawSky(ts);
+  drawCake(ts);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+window.addEventListener("resize", function () {
+  initSky();
+});
+
+/* track the cursor (and touch) in sky-canvas coords so animals can react */
+function trackCursor(cx, cy) { curX = cx / SKY_SCALE; curY = cy / SKY_SCALE; }
+window.addEventListener("mousemove", function (e) { trackCursor(e.clientX, e.clientY); }, { passive: true });
+window.addEventListener("touchmove", function (e) {
+  if (e.touches && e.touches[0]) trackCursor(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+document.addEventListener("mouseleave", function () { curX = -9999; curY = -9999; });
+
+blitIcons(document);
+
+/* keep the date picker from choosing the future */
+try {
+  var nowD = new Date();
+  $("bday").max = nowD.getFullYear() + "-" + pad(nowD.getMonth() + 1) + "-" + pad(nowD.getDate());
+} catch (e) { /* non-critical */ }
+
+})();
+</script>
+</body>
+</html>
