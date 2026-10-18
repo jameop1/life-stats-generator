@@ -12,4 +12,4 @@ Enter your birth date to calculate fascinating, cosmic, and biological life stat
 
 ## Getting Started
 
-Open `index.html` in any modern web browser.
+Open `index.html` in any modern web browser or try it on https://jameop1.github.io/life-stats-generator/
